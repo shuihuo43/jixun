@@ -5,7 +5,7 @@ using UnityEngine;
 
 
 
-[CreateAssetMenu(fileName = "PlayerResource", menuName = "PlayerResource")]
+[CreateAssetMenu(fileName = "PlayerResource", menuName = "Resource/PlayerResource")]
 public class PlayerResource : ScriptableObject
 {
     

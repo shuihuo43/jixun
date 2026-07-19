@@ -3,6 +3,9 @@ using UnityEngine;
 public class Player : MonoBehaviour
 {
     #region 参数
+    [Header("武器")]
+    [SerializeField] private WeaponResource curWeapon;
+
 
     [Header("移动参数")]
     [SerializeField] private float moveSpeed = 12f;
@@ -35,8 +38,6 @@ public class Player : MonoBehaviour
 
     [Header("攻击")]
     [SerializeField] private float attackDuration = 0.3f;
-    [Range(0f, 0.5f)]
-    [SerializeField] private float dashCancelRatio = 0.2f;
     [SerializeField] private float attackScale = 1f;
     [SerializeField] private float slowMoveSpeed = 3f;
     [SerializeField] private int attackCount = 0;
@@ -58,9 +59,9 @@ public class Player : MonoBehaviour
     public bool IsRunning { get; set; }
     public bool IsAttacking { get; set; }
     public bool IsSlowMove { get; set; }
-    public bool CanDashCancel { get; set; }
-    public float AttackDuration => attackDuration;
-    public float DashCancelRatio => dashCancelRatio;
+    public WeaponResource CurWeapon => curWeapon;
+    public float AttackDuration => curWeapon != null ? curWeapon.TotalDuration : attackDuration;
+    public float AttackBaseDuration => curWeapon != null ? curWeapon.AttackDuration : attackDuration;
     public float SlowMoveSpeed => slowMoveSpeed;
     public bool WhenAttackMove => whenAttackMove;
     public bool WhenAttackRun => whenAttackRun;
@@ -123,7 +124,7 @@ public class Player : MonoBehaviour
                 }
                 break;
             case BufferedInput.Dash:
-                if (canDash && !IsDashing && (!IsAttacking || CanDashCancel))
+                if (canDash && !IsDashing)
                 {
                     bufferedInput = BufferedInput.None;
                     if (IsAttacking) actionSM.ChangeToState("None");
@@ -186,16 +187,15 @@ public class Player : MonoBehaviour
                 canDash = true;
         }
 
-        // 4. 预输入：冲刺（攻击后摇最后 20% 可取消）
+        // 4. 预输入：冲刺（优先级高于攻击，可打断）
         if (Input.GetKeyDown(KeyCode.Space))
         {
-            bool canDashNow = canDash && !IsDashing && (!IsAttacking || CanDashCancel);
-            if (canDashNow)
+            if (canDash && !IsDashing)
             {
                 if (IsAttacking) actionSM.ChangeToState("None"); // 打断攻击
                 ExecuteDash();
             }
-            else if (!canDash || IsDashing || IsAttacking)
+            else if (!canDash || IsDashing)
                 SetBuffer(BufferedInput.Dash);
         }
 
@@ -262,9 +262,14 @@ public class Player : MonoBehaviour
         // 实例化实体
         GameObject entityObj = Instantiate(entityPrefab);
 
-        // 获取鼠标方向向量
+        // 获取鼠标方向向量，加上武器随机偏移角度
         Vector3 mouseWorldPos = Camera.main.ScreenToWorldPoint(Input.mousePosition);
-        Vector2 mouseDirection = (mouseWorldPos - entitySpawnPoint.position).normalized;
+        Vector2 baseDirection = (mouseWorldPos - entitySpawnPoint.position).normalized;
+        float baseAngle = Mathf.Atan2(baseDirection.y, baseDirection.x) * Mathf.Rad2Deg;
+        float offsetRange = curWeapon != null ? curWeapon.AttackAngleOffset : 0f;
+        float randomAngle = baseAngle + Random.Range(-offsetRange, offsetRange);
+        float rad = randomAngle * Mathf.Deg2Rad;
+        Vector2 mouseDirection = new Vector2(Mathf.Cos(rad), Mathf.Sin(rad));
 
         // 计算 entityRoot 下的本地坐标
         Vector2 localPos = entityRoot.transform.InverseTransformPoint(entitySpawnPoint.position);
@@ -273,13 +278,13 @@ public class Player : MonoBehaviour
         Entity entity = entityObj.GetComponent<Entity>();
         if (entity != null)
         {
-            entity.EntityBorn(localPos, mouseDirection, entityRoot, new Vector2(attackScale, attackScale), flipY);
+            entity.EntityBorn(curWeapon, localPos, mouseDirection, entityRoot, new Vector2(attackScale, attackScale), flipY);
         }
     }
 
         #endregion
 
-        #region 移动方法（状态机调用）
+    #region 移动方法（状态机调用）
 
         /// <summary>
         /// 带加速度的平滑移动，Move/Run 状态在 FixedUpdate 调用

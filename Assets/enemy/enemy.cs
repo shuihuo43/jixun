@@ -5,228 +5,145 @@ public class Enemy : MonoBehaviour
     [Header("生命值")]
     public int health = 50;
 
-
     [Header("移动与追击")]
-    public float moveSpeed = 3f;                // 靠近速度
-    public float detectionRange = 10f;          // 仇恨范围
-    public float attackRange = 2f;              // 停止移动距离
+    public float moveSpeed = 3f;
+    public float detectionRange = 10f;
+    public float attackRange = 2f;
 
+    [Header("攻击")]
+    public float damage = 10f;
+    [Range(1f, 360f)] public float attackAngle = 90f;
+    public float attackWindup = 0.5f;
+    public float attackCooldown = 1f;
 
-    [Header("攻击属性")]
-    public float damage = 10f;                  // 攻击伤害
-    public float attackCooldown = 1f;           // 攻击间隔
-
-
-    [Header("攻击范围指示器")]
-    public GameObject[] attackRangeObjects;     // 扇形、矩形等攻击范围
-
+    [Header("攻击预警")]
+    public GameObject sectorRangePrefab;
 
     private Transform player;
-
     private float attackTimer = 0f;
 
-    private bool isAttacking = false;
-
-
+    // 前摇状态
+    private bool isWindingUp = false;
+    private float windupTimer = 0f;
+    private SectorRange activeSectorRange;
 
     void Start()
     {
-        //寻找玩家
         GameObject playerObj = GameObject.FindGameObjectWithTag("Player");
-
         if (playerObj != null)
-        {
             player = playerObj.transform;
-        }
         else
-        {
-            Debug.LogError("没有找到Player标签对象！");
-        }
-
-
-        //隐藏攻击范围
-        foreach (GameObject obj in attackRangeObjects)
-        {
-            if (obj != null)
-            {
-                obj.SetActive(false);
-            }
-        }
+            Debug.LogError("没有找到 Player 标签对象！");
     }
-
-
 
     void Update()
     {
-        if (player == null)
+        if (player == null) return;
+
+        // 攻击冷却
+        if (attackTimer > 0)
+            attackTimer -= Time.deltaTime;
+
+        float distance = Vector2.Distance(transform.position, player.position);
+
+        // 超出仇恨范围 → 停止追击，前摇继续（必定完成）
+        if (distance > detectionRange)
             return;
 
-
-        //攻击冷却
-        if (attackTimer > 0)
+        // 追击（有前摇时也继续追）
+        if (distance > attackRange)
         {
-            attackTimer -= Time.deltaTime;
+            ChasePlayer();
+            // 不取消前摇，前摇完成后无论距离都造成伤害
         }
 
+        // 进入攻击范围 → 触发前摇
+        if (!isWindingUp && attackTimer <= 0f && distance <= attackRange)
+            StartWindup();
 
-
-        float distance = Vector2.Distance(
-            transform.position,
-            player.position
-        );
-
-
-
-        //=====================
-        // 超出仇恨范围
-        //=====================
-        if (distance > detectionRange)
-        {
-            SetAttackState(false);
-        }
-
-
-
-        //=====================
-        // 追击
-        //=====================
-        else if (distance > attackRange)
-        {
-            SetAttackState(false);
-
-
-            Vector2 direction =
-                (player.position - transform.position).normalized;
-
-
-            transform.position +=
-                (Vector3)direction * moveSpeed * Time.deltaTime;
-
-
-
-            //2D朝向玩家
-            float angle =
-                Mathf.Atan2(direction.y, direction.x)
-                * Mathf.Rad2Deg;
-
-
-            transform.rotation =
-                Quaternion.Euler(
-                    0,
-                    0,
-                    angle
-                );
-        }
-
-
-
-        //=====================
-        // 攻击状态
-        //=====================
-        else
-        {
-            SetAttackState(true);
-        }
-
+        if (isWindingUp)
+            UpdateWindup();
     }
 
-
-
-
-
-    //显示/隐藏攻击范围
-    void SetAttackState(bool attacking)
+    /// <summary>追向玩家</summary>
+    void ChasePlayer()
     {
-        if (isAttacking == attacking)
-            return;
+        Vector2 direction = (player.position - transform.position).normalized;
+        transform.position += (Vector3)direction * moveSpeed * Time.deltaTime;
 
+        float angle = Mathf.Atan2(direction.y, direction.x) * Mathf.Rad2Deg;
+        transform.rotation = Quaternion.Euler(0, 0, angle);
+    }
 
-        isAttacking = attacking;
+    /// <summary>开始攻击前摇</summary>
+    void StartWindup()
+    {
+        isWindingUp = true;
+        windupTimer = 0f;
 
-
-
-        foreach (GameObject obj in attackRangeObjects)
+        if (sectorRangePrefab != null)
         {
-            if (obj != null)
+            GameObject obj = Instantiate(sectorRangePrefab, transform.position, transform.rotation, transform);
+            activeSectorRange = obj.GetComponent<SectorRange>();
+            if (activeSectorRange != null)
             {
-                obj.SetActive(attacking);
+                activeSectorRange.SectorAngle = attackAngle;
+                activeSectorRange.SectorRadius = attackRange;
+                activeSectorRange.Process = 0f;
             }
         }
     }
 
-
-
-
-
-    //由攻击范围Collider2D调用
-    public void TryAttack()
+    /// <summary>更新前摇进度，满了必定攻击</summary>
+    void UpdateWindup()
     {
-        if (!isAttacking)
-            return;
+        windupTimer += Time.deltaTime;
+        float progress = Mathf.Clamp01(windupTimer / attackWindup);
 
+        if (activeSectorRange != null)
+            activeSectorRange.Process = progress;
 
-        if (attackTimer > 0)
-            return;
-
-
-
-        Player p =
-            player.GetComponent<Player>();
-
-
-        if (p != null)
+        if (progress >= 1f)
         {
-            p.TakeDamage(damage);
+            // 前摇完成，必定造成伤害
+            if (player != null)
+            {
+                Player p = player.GetComponent<Player>();
+                p?.TakeDamage(damage);
+            }
 
+            ClearWindup();
             attackTimer = attackCooldown;
-
-            Debug.Log(
-                gameObject.name +
-                "攻击玩家，造成伤害：" +
-                damage
-            );
         }
-
     }
 
+    void ClearWindup()
+    {
+        isWindingUp = false;
+        windupTimer = 0f;
 
+        if (activeSectorRange != null)
+        {
+            activeSectorRange.DestroyWithFade();
+            activeSectorRange = null;
+        }
+    }
 
-
-
-    //敌人受伤
+    /// <summary>敌人受伤</summary>
     public void TakeDamage(int amount)
     {
         health -= amount;
-
-
         if (health <= 0)
-        {
             Destroy(gameObject);
-        }
     }
 
-
-
-
-
-    //Scene窗口显示范围
-    private void OnDrawGizmosSelected()
+    /// <summary>Scene 窗口显示范围</summary>
+    void OnDrawGizmosSelected()
     {
         Gizmos.color = Color.yellow;
-
-
-        Gizmos.DrawWireSphere(
-            transform.position,
-            detectionRange
-        );
-
+        Gizmos.DrawWireSphere(transform.position, detectionRange);
 
         Gizmos.color = Color.red;
-
-
-        Gizmos.DrawWireSphere(
-            transform.position,
-            attackRange
-        );
+        Gizmos.DrawWireSphere(transform.position, attackRange);
     }
 }

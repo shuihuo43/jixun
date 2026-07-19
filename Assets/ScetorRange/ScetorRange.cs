@@ -1,3 +1,4 @@
+using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 
@@ -11,6 +12,25 @@ public class SectorRange : MonoBehaviour
 
     [Header("进度")]
     [SerializeField][Range(0f, 1f)] private float process = 0.5f;
+
+    /// <summary>前摇进度 0→1（公开给 Enemy 驱动）</summary>
+    public float Process
+    {
+        get => process;
+        set => process = Mathf.Clamp01(value);
+    }
+
+    public float SectorAngle
+    {
+        get => angle;
+        set => angle = Mathf.Clamp(value, 1f, 360f);
+    }
+
+    public float SectorRadius
+    {
+        get => radius;
+        set => radius = value;
+    }
 
     [Header("外层")]
     [SerializeField] private Material outerMaterial;
@@ -214,5 +234,45 @@ public class SectorRange : MonoBehaviour
                 last = next;
             }
         }
+    }
+
+    /// <summary>渐隐后销毁，供 Enemy 攻击完成时调用</summary>
+    public void DestroyWithFade(float fadeDuration = 0.15f)
+    {
+        StopAllCoroutines();
+        StartCoroutine(FadeAndDestroy(fadeDuration));
+    }
+
+    private IEnumerator FadeAndDestroy(float duration)
+    {
+        // 记录起始 alpha
+        float outerStartAlpha = outerInst != null ? outerInst.color.a : 0f;
+        float innerStartAlpha = innerInst != null ? innerInst.color.a : 0f;
+
+        float elapsed = 0f;
+        while (elapsed < duration)
+        {
+            elapsed += Time.deltaTime;
+            float t = elapsed / duration;
+            float invT = 1f - t;
+
+            if (outerInst != null)
+            {
+                Color c = outerInst.color;
+                c.a = outerStartAlpha * invT;
+                outerInst.color = c;
+            }
+
+            if (innerInst != null)
+            {
+                Color c = innerInst.color;
+                c.a = innerStartAlpha * invT;
+                innerInst.color = c;
+            }
+
+            yield return null;
+        }
+
+        Destroy(gameObject);
     }
 }

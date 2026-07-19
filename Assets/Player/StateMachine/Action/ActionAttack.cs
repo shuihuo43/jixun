@@ -3,6 +3,10 @@ using UnityEngine;
 public class ActionAttack : ActionState
 {
     private float attackTimer;
+    private int totalHits;      // 本次攻击总段数
+    private int nextHitIndex;   // 下一段索引（0-based）
+    private float hitInterval;  // 段间隔
+    private float hitTimer;     // 下一段倒计时
 
     public ActionAttack(string name, Player player, ActionStateMachine stateMachine, bool isInit = false)
         : base(name, player, stateMachine, isInit) { }
@@ -13,9 +17,20 @@ public class ActionAttack : ActionState
 
         player.IsAttacking = true;
         player.IsSlowMove = true;
-        player.CanDashCancel = false;
-        player.AttackLogic();
+
+        totalHits = player.CurWeapon != null ? player.CurWeapon.AttackCount : 1;
         attackTimer = player.AttackDuration;
+
+        // 第一段立刻触发
+        player.AttackLogic();
+        nextHitIndex = 1;
+
+        // 连击间隔: 基础时长 / 段数
+        if (totalHits > 1)
+        {
+            hitInterval = player.AttackBaseDuration / totalHits;
+            hitTimer = hitInterval;
+        }
     }
 
     public override void StateUpdate()
@@ -24,10 +39,18 @@ public class ActionAttack : ActionState
 
         attackTimer -= Time.deltaTime;
 
-        // 攻击后摇最后 20% 可被冲刺取消
-        if (!player.CanDashCancel && attackTimer <= player.AttackDuration * player.DashCancelRatio)
+        // 多段攻击触发
+        if (nextHitIndex < totalHits)
         {
-            player.CanDashCancel = true;
+            hitTimer -= Time.deltaTime;
+            if (hitTimer <= 0f)
+            {
+                player.AttackLogic();
+                nextHitIndex++;
+
+                if (nextHitIndex < totalHits)
+                    hitTimer = hitInterval;
+            }
         }
 
         if (attackTimer <= 0f)
@@ -41,7 +64,8 @@ public class ActionAttack : ActionState
         base.StateExit();
         player.IsAttacking = false;
         player.IsSlowMove = false;
-        player.CanDashCancel = false;
         attackTimer = -1f;
+        totalHits = 0;
+        nextHitIndex = 0;
     }
 }

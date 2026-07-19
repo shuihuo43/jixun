@@ -9,7 +9,11 @@ public class Entity : MonoBehaviour
 
 
     public void EntityBorn(
-        Vector2 position, Vector2 direction, GameObject bornRoot, Vector2? scale = null, bool flipY = false
+        WeaponResource weaponResource,
+        Vector2 position,
+        Vector2 direction,
+        GameObject bornRoot, Vector2? scale = null,
+        bool flipY = false
         )
     {
         // 挂到指定父对象下
@@ -27,6 +31,10 @@ public class Entity : MonoBehaviour
         if (flipY)
             finalScale.y *= -1f;
         transform.localScale = new Vector3(finalScale.x, finalScale.y, 1f);
+
+        // 设置攻击动画参数
+        animator.SetInteger("AttackIndex", (int)weaponResource.AttackType);
+        animator.SetTrigger("Attack");
     }
 
     /// <summary>
