@@ -1,5 +1,5 @@
 fileFormatVersion: 2
-guid: 7cc27660ad7436340bc2b2b823aab167
+guid: 5089bf77cc7f42f40b3acbccf3067624
 TextureImporter:
   internalIDToNameTable: []
   externalObjects: {}
@@ -97,118 +97,13 @@ TextureImporter:
     serializedVersion: 2
     sprites:
     - serializedVersion: 2
-      name: hit10_0
-      rect:
-        serializedVersion: 2
-        x: 0
-        y: 64
-        width: 64
-        height: 64
-      alignment: 0
-      pivot: {x: 0, y: 0}
-      border: {x: 0, y: 0, z: 0, w: 0}
-      outline: []
-      physicsShape: []
-      tessellationDetail: 0
-      bones: []
-      spriteID: 107934a2efa1f6d4ea76a99e905b2116
-      internalID: -65562580
-      vertices: []
-      indices: 
-      edges: []
-      weights: []
-    - serializedVersion: 2
-      name: hit10_1
-      rect:
-        serializedVersion: 2
-        x: 64
-        y: 64
-        width: 64
-        height: 64
-      alignment: 0
-      pivot: {x: 0, y: 0}
-      border: {x: 0, y: 0, z: 0, w: 0}
-      outline: []
-      physicsShape: []
-      tessellationDetail: 0
-      bones: []
-      spriteID: e6618c12770f93f42a25521ffb26dec3
-      internalID: -716322244
-      vertices: []
-      indices: 
-      edges: []
-      weights: []
-    - serializedVersion: 2
-      name: hit10_2
-      rect:
-        serializedVersion: 2
-        x: 128
-        y: 64
-        width: 64
-        height: 64
-      alignment: 0
-      pivot: {x: 0, y: 0}
-      border: {x: 0, y: 0, z: 0, w: 0}
-      outline: []
-      physicsShape: []
-      tessellationDetail: 0
-      bones: []
-      spriteID: 1d6e100053f625c4188745ce4c81fe22
-      internalID: 884199345
-      vertices: []
-      indices: 
-      edges: []
-      weights: []
-    - serializedVersion: 2
-      name: hit10_3
-      rect:
-        serializedVersion: 2
-        x: 192
-        y: 64
-        width: 64
-        height: 64
-      alignment: 0
-      pivot: {x: 0, y: 0}
-      border: {x: 0, y: 0, z: 0, w: 0}
-      outline: []
-      physicsShape: []
-      tessellationDetail: 0
-      bones: []
-      spriteID: 162a573815091cb4bbdcc2053c365d45
-      internalID: 740837384
-      vertices: []
-      indices: 
-      edges: []
-      weights: []
-    - serializedVersion: 2
-      name: hit10_4
-      rect:
-        serializedVersion: 2
-        x: 256
-        y: 64
-        width: 64
-        height: 64
-      alignment: 0
-      pivot: {x: 0, y: 0}
-      border: {x: 0, y: 0, z: 0, w: 0}
-      outline: []
-      physicsShape: []
-      tessellationDetail: 0
-      bones: []
-      spriteID: e0e4e9c16758ce642b17641d64ae4597
-      internalID: 1642523788
-      vertices: []
-      indices: 
-      edges: []
-      weights: []
-    - serializedVersion: 2
-      name: hit10_5
+      name: BigSlashV_0
       rect:
         serializedVersion: 2
         x: 0
         y: 0
         width: 64
-        height: 64
+        height: 48
       alignment: 0
       pivot: {x: 0, y: 0}
       border: {x: 0, y: 0, z: 0, w: 0}
@@ -216,20 +111,20 @@ TextureImporter:
       physicsShape: []
       tessellationDetail: 0
       bones: []
-      spriteID: c7d147caec5e7b4479a72887fac1edaa
-      internalID: -724284538
+      spriteID: 342e493fe7c4a7c40901c5679b92554b
+      internalID: 1960055272
       vertices: []
       indices: 
       edges: []
       weights: []
     - serializedVersion: 2
-      name: hit10_6
+      name: BigSlashV_1
       rect:
         serializedVersion: 2
         x: 64
         y: 0
         width: 64
-        height: 64
+        height: 48
       alignment: 0
       pivot: {x: 0, y: 0}
       border: {x: 0, y: 0, z: 0, w: 0}
@@ -237,20 +132,20 @@ TextureImporter:
       physicsShape: []
       tessellationDetail: 0
       bones: []
-      spriteID: c5452a3422f11e84698f1370a47fc56b
-      internalID: -1498323350
+      spriteID: 6b579b209a93d8f43a539ea7d00c80f2
+      internalID: 1556340709
       vertices: []
       indices: 
       edges: []
       weights: []
     - serializedVersion: 2
-      name: hit10_7
+      name: BigSlashV_2
       rect:
         serializedVersion: 2
         x: 128
         y: 0
         width: 64
-        height: 64
+        height: 48
       alignment: 0
       pivot: {x: 0, y: 0}
       border: {x: 0, y: 0, z: 0, w: 0}
@@ -258,20 +153,20 @@ TextureImporter:
       physicsShape: []
       tessellationDetail: 0
       bones: []
-      spriteID: a5edef7e24869e141beb5f96333885aa
-      internalID: 772537118
+      spriteID: 3fe98b41069f7a047a501dad3714d1c1
+      internalID: 942522127
       vertices: []
       indices: 
       edges: []
       weights: []
     - serializedVersion: 2
-      name: hit10_8
+      name: BigSlashV_3
       rect:
         serializedVersion: 2
         x: 192
         y: 0
         width: 64
-        height: 64
+        height: 48
       alignment: 0
       pivot: {x: 0, y: 0}
       border: {x: 0, y: 0, z: 0, w: 0}
@@ -279,20 +174,20 @@ TextureImporter:
       physicsShape: []
       tessellationDetail: 0
       bones: []
-      spriteID: 1a6d3e6083c2db841890396d4792b9d0
-      internalID: -619189468
+      spriteID: 99502987e284c9d408750d170717e362
+      internalID: -1022652077
       vertices: []
       indices: 
       edges: []
       weights: []
     - serializedVersion: 2
-      name: hit10_9
+      name: BigSlashV_4
       rect:
         serializedVersion: 2
         x: 256
         y: 0
         width: 64
-        height: 64
+        height: 48
       alignment: 0
       pivot: {x: 0, y: 0}
       border: {x: 0, y: 0, z: 0, w: 0}
@@ -300,8 +195,8 @@ TextureImporter:
       physicsShape: []
       tessellationDetail: 0
       bones: []
-      spriteID: 57f63d475bf14e14da38f7b10b496dff
-      internalID: -498979915
+      spriteID: f859a880c35a96a4a841602761a4680f
+      internalID: -2104380877
       vertices: []
       indices: 
       edges: []
@@ -317,16 +212,11 @@ TextureImporter:
     weights: []
     secondaryTextures: []
     nameFileIdTable:
-      hit10_0: -65562580
-      hit10_1: -716322244
-      hit10_2: 884199345
-      hit10_3: 740837384
-      hit10_4: 1642523788
-      hit10_5: -724284538
-      hit10_6: -1498323350
-      hit10_7: 772537118
-      hit10_8: -619189468
-      hit10_9: -498979915
+      BigSlashV_0: 1960055272
+      BigSlashV_1: 1556340709
+      BigSlashV_2: 942522127
+      BigSlashV_3: -1022652077
+      BigSlashV_4: -2104380877
   mipmapLimitGroupName: 
   pSDRemoveMatte: 0
   userData: 

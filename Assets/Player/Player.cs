@@ -1,189 +1,368 @@
-using System.Collections;
-using System.Collections.Generic;
 using UnityEngine;
 
 public class Player : MonoBehaviour
 {
-    [Header("ÒÆ¶¯²ÎÊı")]
+    #region å‚æ•°
+
+    [Header("ç§»åŠ¨å‚æ•°")]
     [SerializeField] private float moveSpeed = 12f;
-    [SerializeField] private float runSpeed = 18f;
-    [SerializeField] private float dashSpeed = 45f;
-    [SerializeField] private float dashDuration = 0.15f;
+    [SerializeField] private float runSpeed = 16f;
+    [SerializeField] private float dashSpeed = 35f;
+    [SerializeField] private float dashDuration = 0.2f;
     [SerializeField] private float dashCooldown = 0.3f;
 
-    [Header("³å´ÌÊÖ¸Ğ")]
+    [Header("å†²åˆºæ”¶å°¾")]
     [Range(0f, 1f)]
-    [SerializeField] private float dashEndSpeedRetention = 0.6f;   // ³å´Ì½áÊø±£Áô¶àÉÙËÙ¶È
-    [SerializeField] private float dashEndDecelerationTime = 0.1f; // ³å´Ì½áÊø¼õËÙ¹ı¶ÉÊ±¼ä
+    [SerializeField] private float dashEndSpeedRetention = 0.5f;
+    [SerializeField] private float dashEndDecelerationTime = 0.1f;
 
-    [Header("ÊÖ¸Ğ²ÎÊı")]
+    [Header("æ‰‹æ„Ÿå‚æ•°")]
     [SerializeField] private float accelerationTime = 0.05f;
     [SerializeField] private float decelerationTime = 0.03f;
 
-    [Header("×é¼ş")]
+    [Header("æ‹–å°¾")]
     [SerializeField] private TrailRenderer trail;
     [SerializeField] private Transform rotateRoot;
 
-    // Ë½ÓĞ±äÁ¿
-    private Vector2 moveInput;
-    private Vector2 currentVelocity;
-    private Vector2 dashDirection;
-    private Vector2 preMovementNotZero = Vector2.right; // ¼ÇÂ¼ÉÏ´ÎÒÆ¶¯·½Ïò
+    [Header("ç”Ÿå‘½å€¼")]
+    [SerializeField] private float maxHealth = 100f;
+    [SerializeField] private float currentHealth = 100f;
 
-    private bool isDash;
-    private bool isRun;
+    [Header("å®ä½“")]
+    [SerializeField] private GameObject entityRoot;
+    [SerializeField] private GameObject entityPrefab;
+    [SerializeField] private Transform entitySpawnPoint;
+
+    [Header("æ”»å‡»")]
+    [SerializeField] private float attackDuration = 0.3f;
+    [Range(0f, 0.5f)]
+    [SerializeField] private float dashCancelRatio = 0.2f;
+    [SerializeField] private float attackScale = 1f;
+    [SerializeField] private float slowMoveSpeed = 3f;
+    [SerializeField] private int attackCount = 0;
+    [SerializeField] private bool whenAttackMove = true;
+    [SerializeField] private bool whenAttackRun = true;
+
+
+    #endregion
+
+    #region å…¬å…±å±æ€§ï¼ˆçŠ¶æ€æœºè¯»å–ï¼‰
+
+    public Vector2 MoveInput { get; private set; }
+    public Vector2 PreMovementNotZero { get; private set; } = Vector2.right;
+    public float MoveSpeed => moveSpeed;
+    public float RunSpeed => runSpeed;
+    public float DashSpeed => dashSpeed;
+    public float DashDuration => dashDuration;
+    public bool IsDashing { get; set; }
+    public bool IsRunning { get; set; }
+    public bool IsAttacking { get; set; }
+    public bool IsSlowMove { get; set; }
+    public bool CanDashCancel { get; set; }
+    public float AttackDuration => attackDuration;
+    public float DashCancelRatio => dashCancelRatio;
+    public float SlowMoveSpeed => slowMoveSpeed;
+    public bool WhenAttackMove => whenAttackMove;
+    public bool WhenAttackRun => whenAttackRun;
+
+    // ç”Ÿå‘½å€¼å±æ€§ï¼ˆå¤–éƒ¨UI/Enemyä½¿ç”¨ï¼‰
+    public float MaxHealth => maxHealth;
+    public float CurrentHealth => currentHealth;
+
+    #endregion
+
+    #region å†…éƒ¨çŠ¶æ€ï¼ˆçŠ¶æ€æœºå…±äº«ï¼‰
+
+    internal Vector2 currentVelocity;
+    internal Vector2 velocityRef;
+
     private bool canDash = true;
-
-    private float dashTimer;
     private float dashCooldownTimer;
 
-    private Vector2 velocityRef;
+    #endregion
 
-    // TrailÑÕÉ«
-    private Color dashDebugColor = Color.red;
-    private Color normalDebugColor = Color.green;
-    private Color runDebugColor = Color.blue;
+    #region é¢„è¾“å…¥
+
+    private enum BufferedInput { None, Attack, Dash }
+
+    [Header("é¢„è¾“å…¥")]
+    [SerializeField] private float bufferWindow = 0.25f;
+
+    private BufferedInput bufferedInput = BufferedInput.None;
+    private float bufferTimer;
+
+    /// <summary>å°è¯•å­˜å…¥é¢„è¾“å…¥ï¼Œå·²æœ‰åˆ™å¿½ç•¥</summary>
+    private void SetBuffer(BufferedInput input)
+    {
+        if (bufferedInput == BufferedInput.None)
+        {
+            bufferedInput = input;
+            bufferTimer = bufferWindow;
+        }
+    }
+
+    /// <summary>æ¯å¸§å°è¯•æ¶ˆè´¹é¢„è¾“å…¥</summary>
+    private void ProcessBuffer()
+    {
+        if (bufferedInput == BufferedInput.None) return;
+
+        bufferTimer -= Time.deltaTime;
+        if (bufferTimer <= 0f)
+        {
+            bufferedInput = BufferedInput.None;
+            return;
+        }
+
+        switch (bufferedInput)
+        {
+            case BufferedInput.Attack:
+                if (!IsAttacking && !IsDashing)
+                {
+                    bufferedInput = BufferedInput.None;
+                    ExecuteAttack();
+                }
+                break;
+            case BufferedInput.Dash:
+                if (canDash && !IsDashing && (!IsAttacking || CanDashCancel))
+                {
+                    bufferedInput = BufferedInput.None;
+                    if (IsAttacking) actionSM.ChangeToState("None");
+                    ExecuteDash();
+                }
+                break;
+        }
+    }
+
+    #endregion
+
+    #region çŠ¶æ€æœº
+
+    private PlayerStateMachine movementSM;
+    private ActionStateMachine actionSM;
+
+    #endregion
+
+    void Awake()
+    {
+        movementSM = GetComponent<PlayerStateMachine>();
+        if (movementSM == null)
+            movementSM = gameObject.AddComponent<PlayerStateMachine>();
+
+        actionSM = new ActionStateMachine();
+    }
 
     void Start()
     {
-        dashTimer = -1f;
+        // æœºåŠ¨çŠ¶æ€
+        new PlayerIdle("Idle", this, movementSM, isInit: true);
+        new PlayerMove("Move", this, movementSM);
+        new PlayerDash("Dash", this, movementSM);
+        new PlayerRun("Run", this, movementSM);
+        new PlayerSlowMove("SlowMove", this, movementSM);
+
+        // åŠ¨ä½œçŠ¶æ€
+        new ActionNone("None", this, actionSM, isInit: true);
+        new ActionAttack("Attack", this, actionSM);
     }
 
     void Update()
     {
+        // 1. é¼ æ ‡è·Ÿéš
         Utilties.FollowMouse(rotateRoot, 90, 0);
 
-        // »ñÈ¡ÊäÈë
-        moveInput.x = Input.GetAxisRaw("Horizontal");
-        moveInput.y = Input.GetAxisRaw("Vertical");
-        moveInput = moveInput.normalized;
+        // 2. è¯»å–è¾“å…¥
+        float h = Input.GetAxisRaw("Horizontal");
+        float v = Input.GetAxisRaw("Vertical");
+        MoveInput = new Vector2(h, v).normalized;
 
-        // ¼ÇÂ¼ÒÆ¶¯·½Ïò
-        if (moveInput != Vector2.zero)
-            preMovementNotZero = moveInput;
+        if (MoveInput != Vector2.zero)
+            PreMovementNotZero = MoveInput;
 
-        // ³å´ÌÀäÈ´¼ÆÊ±
+        // 3. å†²åˆºå†·å´è®¡æ—¶
         if (!canDash)
         {
             dashCooldownTimer -= Time.deltaTime;
             if (dashCooldownTimer <= 0f)
-            {
                 canDash = true;
+        }
+
+        // 4. é¢„è¾“å…¥ï¼šå†²åˆºï¼ˆæ”»å‡»åæ‘‡æœ€å 20% å¯å–æ¶ˆï¼‰
+        if (Input.GetKeyDown(KeyCode.Space))
+        {
+            bool canDashNow = canDash && !IsDashing && (!IsAttacking || CanDashCancel);
+            if (canDashNow)
+            {
+                if (IsAttacking) actionSM.ChangeToState("None"); // æ‰“æ–­æ”»å‡»
+                ExecuteDash();
             }
+            else if (!canDash || IsDashing || IsAttacking)
+                SetBuffer(BufferedInput.Dash);
         }
 
-        // ³å´ÌÊäÈë
-        if (Input.GetKeyDown(KeyCode.Space) && canDash && !isDash)
+        // 5. é¢„è¾“å…¥ï¼šæ”»å‡»
+        if (Input.GetMouseButtonDown(0))
         {
-            StartDash();
+            if (!IsAttacking && !IsDashing)
+                ExecuteAttack();
+            else
+                SetBuffer(BufferedInput.Attack);
         }
 
-        // ÅÜ²½¼ì²â
-        if (isRun && !Input.GetKey(KeyCode.Space))
-        {
-            isRun = false;
-        }
+        // 6. å¤„ç†é¢„è¾“å…¥ç¼“å†²
+        ProcessBuffer();
+
+        // 7. å§”æ‰˜åŒçŠ¶æ€æœºå¤„ç†
+        movementSM.StateUpdate();
+        actionSM.StateUpdate();
     }
 
     void FixedUpdate()
     {
-        // ³å´Ì¼ÆÊ±
-        if (isDash)
-        {
-            dashTimer -= Time.fixedDeltaTime;
-            if (dashTimer <= 0f)
-            {
-                EndDash();
-            }
-        }
-
-        // Ó¦ÓÃÒÆ¶¯
-        if (isDash)
-        {
-            // ³å´Ì£º¹Ì¶¨·½Ïò¡¢¹Ì¶¨ËÙ¶È
-            transform.Translate(dashDirection * dashSpeed * Time.fixedDeltaTime);
-        }
-        else
-        {
-            ApplyMovement();
-        }
-
+        movementSM.StateFixedUpdate();
+        actionSM.StateFixedUpdate();
         UpdateTrail();
     }
 
-    void StartDash()
+    #region æ”»å‡»æ–¹æ³•
+
+    /// <summary>æ‰§è¡Œæ”»å‡»ï¼ˆè°ƒç”¨æ–¹å·²é€šè¿‡é¢„è¾“å…¥æ ¡éªŒï¼‰</summary>
+    public void ExecuteAttack()
     {
-        isDash = true;
+        actionSM.ChangeToState("Attack");
+
+        // å½“å‰æ˜¯ Run â†’ æ£€æµ‹æ˜¯å¦å…è®¸æ”»å‡»ä¸­å¥”è·‘ï¼Œä¸å…è®¸åˆ™é™çº§
+        string curMove = movementSM.CurrentStateName;
+        if (curMove == "Run" && !whenAttackRun)
+            movementSM.ChangeToState("SlowMove");
+        else if (curMove == "Move" && !whenAttackMove)
+            movementSM.ChangeToState("SlowMove");
+        else if (curMove != "Run" && curMove != "Move")
+            movementSM.ChangeToState("SlowMove");
+    }
+
+    /// <summary>æ‰§è¡Œå†²åˆº</summary>
+    private void ExecuteDash()
+    {
         canDash = false;
-        dashTimer = dashDuration;
         dashCooldownTimer = dashCooldown;
-
-        // ·½ÏòÂß¼­£ºÓĞÊäÈëÓÃÊäÈë£¬ÎŞÊäÈëÓÃÉÏ´ÎÒÆ¶¯·½Ïò
-        if (moveInput != Vector2.zero)
-            dashDirection = moveInput;
-        else
-            dashDirection = preMovementNotZero;
+        movementSM.ChangeToState("Dash");
     }
 
-    void EndDash()
+
+    // æ”»å‡»é€»è¾‘
+    public void AttackLogic()
     {
-        isDash = false;
-        dashTimer = -1f;
+        if (entityPrefab == null || entityRoot == null || entitySpawnPoint == null)
+            return;
 
-        // ³å´Ì½áÊø£¬°´×¡¿Õ¸ñ½øÈë±¼ÅÜ
-        if (Input.GetKey(KeyCode.Space))
+        // äº¤æ›¿ flipY
+        attackCount++;
+        bool flipY = (attackCount % 2 == 1);
+
+        // å®ä¾‹åŒ–å®ä½“
+        GameObject entityObj = Instantiate(entityPrefab);
+
+        // è·å–é¼ æ ‡æ–¹å‘å‘é‡
+        Vector3 mouseWorldPos = Camera.main.ScreenToWorldPoint(Input.mousePosition);
+        Vector2 mouseDirection = (mouseWorldPos - entitySpawnPoint.position).normalized;
+
+        // è®¡ç®— entityRoot ä¸‹çš„æœ¬åœ°åæ ‡
+        Vector2 localPos = entityRoot.transform.InverseTransformPoint(entitySpawnPoint.position);
+
+        // è°ƒç”¨ EntityBorn åˆå§‹åŒ–ä½ç½®å’Œæœå‘
+        Entity entity = entityObj.GetComponent<Entity>();
+        if (entity != null)
         {
-            isRun = true;
+            entity.EntityBorn(localPos, mouseDirection, entityRoot, new Vector2(attackScale, attackScale), flipY);
         }
-
-        // ³å´Ì½áÊø±£ÁôËÙ¶È
-        float retainedSpeed = Mathf.Lerp(moveSpeed, dashSpeed, dashEndSpeedRetention);
-        currentVelocity = dashDirection * retainedSpeed;
     }
 
-    void ApplyMovement()
+        #endregion
+
+        #region ç§»åŠ¨æ–¹æ³•ï¼ˆçŠ¶æ€æœºè°ƒç”¨ï¼‰
+
+        /// <summary>
+        /// å¸¦åŠ é€Ÿåº¦çš„å¹³æ»‘ç§»åŠ¨ï¼ŒMove/Run çŠ¶æ€åœ¨ FixedUpdate è°ƒç”¨
+        /// </summary>
+    public void ApplyMovement(float targetSpeed)
     {
-        float targetSpeed = isRun ? runSpeed : moveSpeed;
+        Vector2 targetVelocity = MoveInput * targetSpeed;
 
-        if (moveInput.magnitude > 0.1f)
-        {
-            Vector2 targetVelocity = moveInput * targetSpeed;
-            currentVelocity = Vector2.SmoothDamp(
-                currentVelocity,
-                targetVelocity,
-                ref velocityRef,
-                accelerationTime
-            );
-        }
-        else
-        {
-            currentVelocity = Vector2.SmoothDamp(
-                currentVelocity,
-                Vector2.zero,
-                ref velocityRef,
-                decelerationTime
-            );
+        currentVelocity = Vector2.SmoothDamp(
+            currentVelocity,
+            targetVelocity,
+            ref velocityRef,
+            accelerationTime
+        );
 
-            if (currentVelocity.magnitude < 0.1f)
-                currentVelocity = Vector2.zero;
-        }
-
+        // è¶…é€Ÿé’³åˆ¶
         if (currentVelocity.magnitude > targetSpeed)
-        {
             currentVelocity = currentVelocity.normalized * targetSpeed;
-        }
 
         transform.Translate(currentVelocity * Time.fixedDeltaTime);
     }
 
+    /// <summary>
+    /// é€Ÿåº¦è¡°å‡è‡³0ï¼ŒIdle çŠ¶æ€åœ¨ FixedUpdate è°ƒç”¨
+    /// </summary>
+    public void ApplyDeceleration()
+    {
+        currentVelocity = Vector2.SmoothDamp(
+            currentVelocity,
+            Vector2.zero,
+            ref velocityRef,
+            decelerationTime
+        );
+
+        if (currentVelocity.magnitude < 0.1f)
+            currentVelocity = Vector2.zero;
+
+        transform.Translate(currentVelocity * Time.fixedDeltaTime);
+    }
+
+    /// <summary>
+    /// å†²åˆºç»“æŸæ—¶è®¾å®šä¿ç•™é€Ÿåº¦ï¼ŒDash çŠ¶æ€é€€å‡ºå‰è°ƒç”¨
+    /// </summary>
+    public void SetDashEndVelocity(Vector2 dashDir)
+    {
+        float retainedSpeed = Mathf.Lerp(moveSpeed, dashSpeed, dashEndSpeedRetention);
+        currentVelocity = dashDir * retainedSpeed;
+    }
+
+    #endregion
+
+    #region ç”Ÿå‘½å€¼
+
+    public void TakeDamage(float amount)
+    {
+        currentHealth -= amount;
+        currentHealth = Mathf.Clamp(currentHealth, 0f, maxHealth);
+        if (currentHealth <= 0f)
+        {
+            Debug.Log("ç©å®¶æ­»äº¡");
+        }
+    }
+
+    public void Heal(float amount)
+    {
+        currentHealth += amount;
+        currentHealth = Mathf.Clamp(currentHealth, 0f, maxHealth);
+    }
+
+    #endregion
+
+    #region æ‹–å°¾
+
     void UpdateTrail()
     {
-        if (isDash)
-            trail.colorGradient = CreateGradient(dashDebugColor);
-        else if (isRun)
-            trail.colorGradient = CreateGradient(runDebugColor);
+        if (trail == null) return;
+
+        if (IsDashing)
+            trail.colorGradient = CreateGradient(Color.red);
+        else if (IsRunning)
+            trail.colorGradient = CreateGradient(Color.blue);
         else
-            trail.colorGradient = CreateGradient(normalDebugColor);
+            trail.colorGradient = CreateGradient(Color.green);
     }
 
     Gradient CreateGradient(Color color)
@@ -200,4 +379,6 @@ public class Player : MonoBehaviour
             }
         };
     }
+
+    #endregion
 }

@@ -170,13 +170,13 @@ public class Enemy : MonoBehaviour
 
 
 
-        PlayerController pc =
-            player.GetComponent<PlayerController>();
+        Player p =
+            player.GetComponent<Player>();
 
 
-        if (pc != null)
+        if (p != null)
         {
-            pc.TakeDamage(damage);
+            p.TakeDamage(damage);
 
             attackTimer = attackCooldown;
 

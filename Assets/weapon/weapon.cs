@@ -2,21 +2,24 @@ using UnityEngine;
 
 public class Weapon : MonoBehaviour
 {
-    [SerializeField] private float rotateSpeed = 10f; // »º¶¯ËÙ¶È
+    [SerializeField] private float rotateSpeed = 10f; // ï¿½ï¿½ï¿½ï¿½ï¿½Ù¶ï¿½
     [SerializeField] private Animator animator;
 
-    #region ÉúÃüÖÜÆÚº¯Êı
+    #region ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Úºï¿½ï¿½ï¿½
     void Update()
     {
         AttackCheck();
+        //print(GetAttackState());
         if (!GetAttackState())
-            Utilties.FollowMouse(this.transform, rotateSpeed, -45);
+            Utilties.FollowMouse(this.transform, rotateSpeed, 0);
+        else
+            print("attacking");
     }
 
     #endregion
 
 
-    #region ¹¥»÷
+    #region ï¿½ï¿½ï¿½ï¿½
 
     private void AttackCheck()
     {
@@ -31,27 +34,43 @@ public class Weapon : MonoBehaviour
         if(!GetAttackState())
         {
             animator.SetTrigger("Attack");
-            animator.SetBool("IsAttack", true);
         }
     }
 
     #endregion
 
 
-    #region ·½·¨º¯Êı
+    #region ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
 
+    private void AttackStart()
+    {
+        animator.SetBool("IsAttack", true);
+        SnapToMouseDirection();
+        print("attack_start");
+        //print(GetAttackState());
+    }
 
+    /// <summary>
+    /// ç«‹å³å°†æœå‘å®šåˆ°é¼ æ ‡æ–¹å‘ï¼ˆä»…ä¸€æ¬¡ï¼Œä¸å¹³æ»‘è¿‡æ¸¡ï¼‰
+    /// </summary>
+    private void SnapToMouseDirection()
+    {
+        Vector3 mousePos = Camera.main.ScreenToWorldPoint(Input.mousePosition);
+        Vector2 direction = mousePos - transform.position;
+        float targetAngle = Mathf.Atan2(direction.y, direction.x) * Mathf.Rad2Deg;
+        transform.rotation = Quaternion.Euler(0, 0, targetAngle);
+    }
 
     private void AttackEnd()
     {
         animator.SetBool("IsAttack", false);
-        print("attack_over");
+        //print("attack_over");
     }
 
 
     private bool GetAttackState()
     {
-        return animator.GetCurrentAnimatorStateInfo(0).IsName("Attack");
+        return animator.GetBool("IsAttack");
     }
 
     #endregion

@@ -1,23 +1,22 @@
 using System.Collections.Generic;
-using UnityEngine;
 
-public class PlayerStateMachine : MonoBehaviour
+public class ActionStateMachine
 {
-    private PlayerState curState;
-    private PlayerState initState;
-    private Dictionary<string, PlayerState> stateLibrary;
+    private ActionState curState;
+    private ActionState initState;
+    private Dictionary<string, ActionState> stateLibrary;
 
     public string CurrentStateName => curState?.StateName;
 
-    void Awake()
+    public ActionStateMachine()
     {
-        stateLibrary = new Dictionary<string, PlayerState>();
+        stateLibrary = new Dictionary<string, ActionState>();
     }
 
-    public void StateRegist(PlayerState state, string stateName, bool isInit = false)
+    public void StateRegist(ActionState state, string stateName, bool isInit = false)
     {
         if (stateLibrary == null)
-            stateLibrary = new Dictionary<string, PlayerState>();
+            stateLibrary = new Dictionary<string, ActionState>();
 
         if (stateLibrary.ContainsKey(stateName))
             return;
@@ -38,20 +37,18 @@ public class PlayerStateMachine : MonoBehaviour
         if (!stateLibrary.ContainsKey(tarName))
             return;
 
-        curState.StateExit();
+        curState?.StateExit();
         curState = stateLibrary[tarName];
         curState.StateEnter();
     }
 
     public void StateUpdate()
     {
-        if (curState != null)
-            curState.StateUpdate();
+        curState?.StateUpdate();
     }
 
     public void StateFixedUpdate()
     {
-        if (curState != null)
-            curState.StateFixedUpdate();
+        curState?.StateFixedUpdate();
     }
 }

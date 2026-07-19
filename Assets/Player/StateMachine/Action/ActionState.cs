@@ -1,12 +1,10 @@
-using UnityEngine;
-
-public class PlayerState
+public class ActionState
 {
     public string StateName { get; private set; }
     protected Player player;
-    protected PlayerStateMachine stateMachine;
+    protected ActionStateMachine stateMachine;
 
-    public PlayerState(string name, Player player, PlayerStateMachine stateMachine, bool isInit = false)
+    public ActionState(string name, Player player, ActionStateMachine stateMachine, bool isInit = false)
     {
         this.StateName = name;
         this.player = player;
