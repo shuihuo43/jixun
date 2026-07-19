@@ -59,6 +59,7 @@ public class PlayerController : MonoBehaviour
 
     private void Update()
     {
+        Utilties.FollowMouse(this.transform, 720, 0);
         // 读取移动输入
         float horizontal = Input.GetAxisRaw("Horizontal");
         float vertical = Input.GetAxisRaw("Vertical");
