@@ -12,8 +12,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 4e24966ef732b5243b350fb04fc4e8c5, type: 3}
   m_Name: SwingTest_01
   m_EditorClassIdentifier: 
-  AttackCount: 3
+  AttackCount: 1
   AttackType: 0
-  AttackDuration: 0.45
-  AttackRecovery: 0.3
+  AttackDuration: 0.1
+  AttackRecovery: 0.05
   AttackAngleOffset: 45

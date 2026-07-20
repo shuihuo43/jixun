@@ -36,6 +36,10 @@ public class Player : MonoBehaviour
     [SerializeField] private GameObject entityPrefab;
     [SerializeField] private Transform entitySpawnPoint;
 
+    [Header("血迹测试")]
+    [SerializeField] private GameObject bloodPrefab;
+    [SerializeField] private int bloodCount = 5;
+
     [Header("攻击")]
     [SerializeField] private float attackDuration = 0.3f;
     [SerializeField] private float attackScale = 1f;
@@ -287,6 +291,39 @@ public class Player : MonoBehaviour
         if (attackEntity != null)
         {
             attackEntity.AttackBorn(curWeapon, localPos, mouseDirection, entityRoot, new Vector2(attackScale, attackScale), flipY);
+        }
+
+        // 测试血迹扇形
+        SpawnBloodFan(mouseDirection);
+    }
+
+    /// <summary>测试：沿朝向 ±45° 扇形均分生成血迹</summary>
+    [ContextMenu("Test Blood Fan")]
+    public void TestBloodFan()
+    {
+        SpawnBloodFan(Vector2.right);
+    }
+
+    private void SpawnBloodFan(Vector2 faceDir)
+    {
+        if (bloodPrefab == null) return;
+
+        float baseAngle = Mathf.Atan2(faceDir.y, faceDir.x) * Mathf.Rad2Deg;
+
+        for (int i = 0; i < bloodCount; i++)
+        {
+            float t = bloodCount == 1 ? 0f : (float)i / (bloodCount - 1);
+            float angle = Mathf.Lerp(-45f, 45f, t) + baseAngle;
+            float rad = angle * Mathf.Deg2Rad;
+            Vector2 dir = new Vector2(Mathf.Cos(rad), Mathf.Sin(rad));
+
+            GameObject obj = Instantiate(bloodPrefab, entityRoot.transform);
+            Entity e = obj.GetComponent<Entity>();
+            if (e != null)
+            {
+                Vector2 localPos = entityRoot.transform.InverseTransformPoint(entitySpawnPoint.position);
+                e.EntityBorn(localPos, dir, entityRoot);
+            }
         }
     }
 
