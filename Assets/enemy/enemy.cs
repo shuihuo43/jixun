@@ -2,6 +2,7 @@ using UnityEngine;
 
 public class Enemy : MonoBehaviour
 {
+    public System.Action<GameObject> OnDeath;
     [Header("生命值")]
     public int health = 50;
 
@@ -201,7 +202,12 @@ public class Enemy : MonoBehaviour
 
         if (health <= 0)
         {
+
+            OnDeath?.Invoke(gameObject);
+
+
             Destroy(gameObject);
+
         }
     }
 
