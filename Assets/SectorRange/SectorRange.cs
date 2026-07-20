@@ -4,11 +4,31 @@ using UnityEngine;
 
 public class SectorRange : MonoBehaviour
 {
+    public enum WarningShape { Sector, Box }
+
     [Header("形状")]
+    [SerializeField] private WarningShape warningShape = WarningShape.Sector;
     [SerializeField][Range(1f, 360f)] private float angle = 360;
     [SerializeField][Range(0.1f, 20f)] private float radius = 3f;
     [SerializeField][Range(0f, 20f)]  private float innerRadius = 0f;
     [SerializeField][Range(1, 60)]    private int quality = 6;
+
+    /// <summary>与 ShapeArea.ShapeType 同步</summary>
+    public WarningShape Shape
+    {
+        get => warningShape;
+        set => warningShape = value;
+    }
+
+    public void SyncFromShapeArea(ShapeArea sa)
+    {
+        if (sa == null) return;
+        warningShape = (int)sa.Shape == 0 ? WarningShape.Sector : WarningShape.Box;
+        angle = sa.Angle;
+        radius = sa.Radius;
+        boxWidth = sa.BoxWidth;
+        boxHeight = sa.BoxHeight;
+    }
 
     [Header("进度")]
     [SerializeField][Range(0f, 1f)] private float process = 0.5f;
@@ -52,13 +72,26 @@ public class SectorRange : MonoBehaviour
     private MeshRenderer innerRenderer;
     private Material innerInst;
 
+    [Header("矩形")]
+    [SerializeField] private float boxWidth = 2f;
+    [SerializeField] private float boxHeight = 1f;
+
     public void Update()
     {
-        float innerLayerRadius = Mathf.Lerp(innerRadius, radius, process);
-
         EnsureObjects();
-        ApplyLayer(outerObj, outerFilter, outerRenderer, ref outerInst, outerMaterial, outerColor, angle, radius);
-        ApplyLayer(innerObj, innerFilter, innerRenderer, ref innerInst, innerMaterial, innerColor, angle, innerLayerRadius);
+
+        if (warningShape == WarningShape.Box)
+        {
+            float fillWidth = boxWidth * process;
+            ApplyBoxMesh(outerFilter, outerRenderer, ref outerInst, outerMaterial, outerColor, boxWidth, boxHeight, 0);
+            ApplyBoxMesh(innerFilter, innerRenderer, ref innerInst, innerMaterial, innerColor, fillWidth, boxHeight, 1);
+        }
+        else
+        {
+            float innerLayerRadius = Mathf.Lerp(innerRadius, radius, process);
+            ApplyLayer(outerObj, outerFilter, outerRenderer, ref outerInst, outerMaterial, outerColor, angle, radius);
+            ApplyLayer(innerObj, innerFilter, innerRenderer, ref innerInst, innerMaterial, innerColor, angle, innerLayerRadius);
+        }
     }
 
     private void EnsureObjects()
@@ -172,6 +205,51 @@ public class SectorRange : MonoBehaviour
         mesh.vertices = vertices.ToArray();
         mesh.triangles = triangles.ToArray();
         mesh.uv = uvs.ToArray();
+        mesh.RecalculateNormals();
+        mesh.RecalculateBounds();
+        return mesh;
+    }
+
+    private void ApplyBoxMesh(MeshFilter filter, MeshRenderer renderer, ref Material inst,
+                               Material src, Color color, float w, float h, int sortingOrder)
+    {
+        bool visible = w > 0.001f && h > 0.001f && boxWidth > 0.001f && boxHeight > 0.001f;
+        if (filter == innerFilter) innerObj.SetActive(visible);
+        else outerObj.SetActive(visible);
+
+        if (!visible) return;
+
+        if (inst == null)
+        {
+            inst = src != null ? new Material(src) : new Material(Shader.Find("Sprites/Default"));
+            if (!inst.HasProperty("_Color"))
+                inst.shader = Shader.Find("Sprites/Default");
+        }
+
+        Mesh mesh = BuildBoxMesh(w, h);
+        filter.mesh = mesh;
+        inst.color = color;
+        renderer.sharedMaterial = inst;
+        renderer.sortingOrder = sortingOrder;
+    }
+
+    /// <summary>构建矩形 mesh，从左到右填充，中心和 Sector 默认方向一致（朝上）</summary>
+    private Mesh BuildBoxMesh(float w, float h)
+    {
+        float hw = w / 2f;
+        float hh = h / 2f;
+
+        // 矩形顶点：左右翻转使推进方向和扇形朝向一致（从前方开始）
+        Mesh mesh = new Mesh();
+        mesh.vertices = new Vector3[]
+        {
+            new Vector3(-hh, -hw),   // 左下
+            new Vector3( hh, -hw),   // 右下
+            new Vector3( hh,  hw),   // 右上
+            new Vector3(-hh,  hw),   // 左上
+        };
+        mesh.triangles = new int[] { 0, 2, 1, 0, 3, 2 };
+        mesh.uv = new Vector2[] { new Vector2(0,0), new Vector2(1,0), new Vector2(1,1), new Vector2(0,1) };
         mesh.RecalculateNormals();
         mesh.RecalculateBounds();
         return mesh;

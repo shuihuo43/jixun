@@ -230,14 +230,22 @@ public class Player : MonoBehaviour
     {
         actionSM.ChangeToState("Attack");
 
-        // 当前是 Run → 检测是否允许攻击中奔跑，不允许则降级
+        // 攻击期间机动状态降级：Run→Move→SlowMove
         string curMove = movementSM.CurrentStateName;
-        if (curMove == "Run" && !whenAttackRun)
+        if (curMove == "Run")
+        {
+            if (!whenAttackRun)
+                movementSM.ChangeToState(whenAttackMove ? "Move" : "SlowMove");
+        }
+        else if (curMove == "Move")
+        {
+            if (!whenAttackMove)
+                movementSM.ChangeToState("SlowMove");
+        }
+        else
+        {
             movementSM.ChangeToState("SlowMove");
-        else if (curMove == "Move" && !whenAttackMove)
-            movementSM.ChangeToState("SlowMove");
-        else if (curMove != "Run" && curMove != "Move")
-            movementSM.ChangeToState("SlowMove");
+        }
     }
 
     /// <summary>执行冲刺</summary>
@@ -274,11 +282,11 @@ public class Player : MonoBehaviour
         // 计算 entityRoot 下的本地坐标
         Vector2 localPos = entityRoot.transform.InverseTransformPoint(entitySpawnPoint.position);
 
-        // 调用 EntityBorn 初始化位置和朝向
-        Entity entity = entityObj.GetComponent<Entity>();
-        if (entity != null)
+        // 调用 AttackBorn 初始化
+        AttackEntity attackEntity = entityObj.GetComponent<AttackEntity>();
+        if (attackEntity != null)
         {
-            entity.EntityBorn(curWeapon, localPos, mouseDirection, entityRoot, new Vector2(attackScale, attackScale), flipY);
+            attackEntity.AttackBorn(curWeapon, localPos, mouseDirection, entityRoot, new Vector2(attackScale, attackScale), flipY);
         }
     }
 

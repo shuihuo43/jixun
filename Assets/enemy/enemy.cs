@@ -20,7 +20,7 @@ public class Enemy : MonoBehaviour
     public GameObject sectorRangePrefab;
 
     private Transform player;
-    private float attackTimer = 0f;
+    private float attackTimer = 0f;        // 初始0，首次立刻响应
 
     // 前摇状态
     private bool isWindingUp = false;
@@ -40,7 +40,7 @@ public class Enemy : MonoBehaviour
     {
         if (player == null) return;
 
-        // 攻击冷却
+        // 攻击间隔冷却
         if (attackTimer > 0)
             attackTimer -= Time.deltaTime;
 
@@ -57,7 +57,7 @@ public class Enemy : MonoBehaviour
             // 不取消前摇，前摇完成后无论距离都造成伤害
         }
 
-        // 进入攻击范围 → 触发前摇
+        // 进入攻击范围 → 触发前摇（首次立刻，后续等冷却）
         if (!isWindingUp && attackTimer <= 0f && distance <= attackRange)
             StartWindup();
 
@@ -113,7 +113,6 @@ public class Enemy : MonoBehaviour
             }
 
             ClearWindup();
-            attackTimer = attackCooldown;
         }
     }
 
@@ -121,6 +120,7 @@ public class Enemy : MonoBehaviour
     {
         isWindingUp = false;
         windupTimer = 0f;
+        attackTimer = attackCooldown;
 
         if (activeSectorRange != null)
         {
