@@ -34,7 +34,22 @@ public class PlayerDash : PlayerState
     public override void StateFixedUpdate()
     {
         base.StateFixedUpdate();
-        player.transform.Translate(dashDirection * player.DashSpeed * Time.fixedDeltaTime);
+        Vector2 delta = dashDirection * player.DashSpeed * Time.fixedDeltaTime;
+
+        if (player.Rigidbody2D != null)
+        {
+            // 前方碰撞检测，防止高速穿透
+            RaycastHit2D[] hits = new RaycastHit2D[1];
+            int hitCount = player.Rigidbody2D.Cast(dashDirection, hits, delta.magnitude);
+            if (hitCount > 0)
+                delta = dashDirection * hits[0].distance;
+
+            player.Rigidbody2D.MovePosition(player.Rigidbody2D.position + delta);
+        }
+        else
+        {
+            player.transform.Translate(delta);
+        }
     }
 
     public override void StateExit()

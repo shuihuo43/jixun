@@ -3,6 +3,9 @@ using UnityEngine;
 public class Player : MonoBehaviour
 {
     #region 参数
+    [Header("玩家资源")]
+    [SerializeField]  private PlayerResource playerResource;
+
     [Header("武器")]
     [SerializeField] private WeaponResource curWeapon;
 
@@ -79,6 +82,9 @@ public class Player : MonoBehaviour
     internal Vector2 currentVelocity;
     internal Vector2 velocityRef;
 
+    private Rigidbody2D rb;
+    internal Rigidbody2D Rigidbody2D => rb;
+
     private bool canDash = true;
     private float dashCooldownTimer;
 
@@ -152,6 +158,8 @@ public class Player : MonoBehaviour
             movementSM = gameObject.AddComponent<PlayerStateMachine>();
 
         actionSM = new ActionStateMachine();
+
+        rb = GetComponent<Rigidbody2D>();
     }
 
     void Start()
@@ -346,7 +354,11 @@ public class Player : MonoBehaviour
         if (currentVelocity.magnitude > targetSpeed)
             currentVelocity = currentVelocity.normalized * targetSpeed;
 
-        transform.Translate(currentVelocity * Time.fixedDeltaTime);
+        Vector2 delta = currentVelocity * Time.fixedDeltaTime;
+        if (rb != null)
+            rb.MovePosition(rb.position + delta);
+        else
+            transform.Translate(delta);
     }
 
     /// <summary>
@@ -364,7 +376,11 @@ public class Player : MonoBehaviour
         if (currentVelocity.magnitude < 0.1f)
             currentVelocity = Vector2.zero;
 
-        transform.Translate(currentVelocity * Time.fixedDeltaTime);
+        Vector2 delta = currentVelocity * Time.fixedDeltaTime;
+        if (rb != null)
+            rb.MovePosition(rb.position + delta);
+        else
+            transform.Translate(delta);
     }
 
     /// <summary>

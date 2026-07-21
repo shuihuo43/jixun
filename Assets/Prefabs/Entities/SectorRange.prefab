@@ -53,9 +53,9 @@ MonoBehaviour:
   quality: 60
   process: 1
   outerMaterial: {fileID: 2100000, guid: 11fb69f974205f2439dc9f2ebb045c4d, type: 2}
-  outerColor: {r: 1, g: 1, b: 1, a: 1}
+  outerColor: {r: 1, g: 0.89954376, b: 0, a: 1}
   innerMaterial: {fileID: 2100000, guid: f34fac0a899284e4f81c888b579f4495, type: 2}
-  innerColor: {r: 0.72955966, g: 0, b: 0, a: 1}
+  innerColor: {r: 1, g: 0, b: 0.19155788, a: 1}
   boxWidth: 2
   boxHeight: 1
 --- !u!33 &7579080301448796372
