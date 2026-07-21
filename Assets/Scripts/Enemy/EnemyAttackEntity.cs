@@ -169,24 +169,27 @@ public class EnemyAttackEntity : MonoBehaviour
         {
 
             GameObject obj =
-            Instantiate(
-                sectorRangePrefab,
-                transform.position,
-                Quaternion.identity
-            );
+Instantiate(
+    sectorRangePrefab,
+    transform.position,
+    Quaternion.Euler(0, 0, lockedDirection)
+);
 
 
             obj.transform.SetParent(transform);
+
 
 
             activeWarning =
             obj.GetComponent<SectorRange>();
 
 
+
             activeWarning.SyncFromShapeArea(shapeArea);
 
 
-            activeWarning.Process = 0;
+            // 不再设置 Direction
+            activeWarning.Direction = 0;
 
         }
 

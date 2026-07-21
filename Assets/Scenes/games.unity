@@ -702,7 +702,6 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   nextRoomPoint: {fileID: 0}
-  player: {fileID: 0}
   fader: {fileID: 0}
 --- !u!212 &785192013
 SpriteRenderer:
@@ -1914,6 +1913,14 @@ PrefabInstance:
     serializedVersion: 3
     m_TransformParent: {fileID: 0}
     m_Modifications:
+    - target: {fileID: 997696775585687386, guid: d344c9df67d85c343ada807b9a6db400, type: 3}
+      propertyPath: m_LocalPosition.x
+      value: -0.03
+      objectReference: {fileID: 0}
+    - target: {fileID: 1979631044652694337, guid: d344c9df67d85c343ada807b9a6db400, type: 3}
+      propertyPath: m_LocalPosition.x
+      value: -0.01
+      objectReference: {fileID: 0}
     - target: {fileID: 5702593936152519515, guid: d344c9df67d85c343ada807b9a6db400, type: 3}
       propertyPath: m_LocalPosition.x
       value: -7.01
