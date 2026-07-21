@@ -1,5 +1,6 @@
 using UnityEngine;
 
+
 public class EnemyBrain : MonoBehaviour
 {
 
@@ -14,6 +15,9 @@ public class EnemyBrain : MonoBehaviour
 
 
     private Transform player;
+
+
+    public bool CanMove = true;
 
 
 
@@ -31,9 +35,8 @@ public class EnemyBrain : MonoBehaviour
             return;
 
 
-
         float distance =
-        Vector2.Distance(transform.position, player.position);
+            Vector2.Distance(enemyRoot.position, player.position);
 
 
 
@@ -42,8 +45,8 @@ public class EnemyBrain : MonoBehaviour
 
 
 
-        //攻击状态禁止移动
-        if (attack.IsAttacking)
+        //攻击中禁止移动
+        if (!CanMove)
             return;
 
 
@@ -75,5 +78,6 @@ public class EnemyBrain : MonoBehaviour
         enemyRoot.right = dir;
 
     }
+
 
 }
