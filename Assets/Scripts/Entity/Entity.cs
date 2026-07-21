@@ -29,7 +29,7 @@ public class Entity : MonoBehaviour
         transform.localScale = new Vector3(finalScale.x, finalScale.y, 1f);
     }
 
-    public void EntityDestroy()
+    public virtual void EntityDestroy()
     {
         Destroy(gameObject);
     }
