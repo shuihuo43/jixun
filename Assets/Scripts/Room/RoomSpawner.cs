@@ -81,9 +81,13 @@ public class RoomSpawner : MonoBehaviour
 
 
 
-            //等待这一波全部死亡
+            //等待这一波全部死亡（兼容被直接 Destroy 的敌人）
             yield return new WaitUntil(
-                () => aliveEnemies.Count == 0
+                () =>
+                {
+                    aliveEnemies.RemoveAll(e => e == null);
+                    return aliveEnemies.Count == 0;
+                }
             );
 
 
@@ -116,13 +120,10 @@ public class RoomSpawner : MonoBehaviour
         aliveEnemies.Add(enemy);
 
 
-        EnemyHealth health =
-  enemy.GetComponent<EnemyHealth>();
-
-        if (health != null)
-        {
-            health.OnDeath += RemoveEnemy;
-        }
+        // 兼容旧 Enemy 和新 EnemyBrain 两种敌人系统
+        Enemy enemyScript = enemy.GetComponent<Enemy>();
+        if (enemyScript != null)
+            enemyScript.OnDeath += RemoveEnemy;
 
     }
 
@@ -160,8 +161,12 @@ public class RoomSpawner : MonoBehaviour
         Debug.Log("房间完成");
 
 
+        //墙保持存在
+
+
         exitPortal.OpenPortal();
 
     }
+
 
 }

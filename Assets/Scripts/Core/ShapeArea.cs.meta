@@ -1,0 +1,15 @@
+fileFormatVersion: 2
+<<<<<<<< HEAD:Assets/Scripts/Core/ShapeArea.cs.meta
+guid: d97e3f07782c52d47a199266dd9cb397
+========
+guid: c60b4b338b86c8348a7c09590bb53323
+>>>>>>>> d1fa59c30ef8a09c9d210108d6cc56805c15abbd:Assets/Scripts/Core/Utilities.cs.meta
+MonoImporter:
+  externalObjects: {}
+  serializedVersion: 2
+  defaultReferences: []
+  executionOrder: 0
+  icon: {instanceID: 0}
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 
