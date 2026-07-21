@@ -1,9 +1,5 @@
 fileFormatVersion: 2
-<<<<<<<< HEAD:Assets/Scripts/Player/PlayerResource.cs.meta
-guid: 35068a9be51241f4dae59e5859a47256
-========
 guid: f1b77c5fd528f554799adb135b184387
->>>>>>>> origin/testL:Assets/enemy/enemy.cs.meta
 MonoImporter:
   externalObjects: {}
   serializedVersion: 2
