@@ -23,8 +23,6 @@ public class Player : MonoBehaviour
     [SerializeField] private float accelerationTime = 0.05f;
     [SerializeField] private float decelerationTime = 0.03f;
 
-    [Header("拖尾")]
-    [SerializeField] private TrailRenderer trail;
     [SerializeField] private Transform rotateRoot;
 
     [Header("生命值")]
@@ -224,7 +222,6 @@ public class Player : MonoBehaviour
     {
         movementSM.StateFixedUpdate();
         actionSM.StateFixedUpdate();
-        UpdateTrail();
     }
 
     #region 攻击方法
@@ -401,34 +398,40 @@ public class Player : MonoBehaviour
 
     #endregion
 
-    #region 拖尾
+    #region 拖尾（调试 / 已注释）
 
-    void UpdateTrail()
-    {
-        if (trail == null) return;
+    // [Header("拖尾")]
+    // [SerializeField] private TrailRenderer trail;
 
-        if (IsDashing)
-            trail.colorGradient = CreateGradient(Color.red);
-        else if (IsRunning)
-            trail.colorGradient = CreateGradient(Color.blue);
-        else
-            trail.colorGradient = CreateGradient(Color.green);
-    }
+    // FixedUpdate 中调用:
+    // UpdateTrail();
 
-    Gradient CreateGradient(Color color)
-    {
-        return new Gradient()
-        {
-            colorKeys = new GradientColorKey[] {
-                new GradientColorKey(color, 0f),
-                new GradientColorKey(color, 1f)
-            },
-            alphaKeys = new GradientAlphaKey[] {
-                new GradientAlphaKey(1f, 0f),
-                new GradientAlphaKey(1f, 1f)
-            }
-        };
-    }
+    // void UpdateTrail()
+    // {
+    //     if (trail == null) return;
+    //
+    //     if (IsDashing)
+    //         trail.colorGradient = CreateGradient(Color.red);
+    //     else if (IsRunning)
+    //         trail.colorGradient = CreateGradient(Color.blue);
+    //     else
+    //         trail.colorGradient = CreateGradient(Color.green);
+    // }
+    //
+    // Gradient CreateGradient(Color color)
+    // {
+    //     return new Gradient()
+    //     {
+    //         colorKeys = new GradientColorKey[] {
+    //             new GradientColorKey(color, 0f),
+    //             new GradientColorKey(color, 1f)
+    //         },
+    //         alphaKeys = new GradientAlphaKey[] {
+    //             new GradientAlphaKey(1f, 0f),
+    //             new GradientAlphaKey(1f, 1f)
+    //         }
+    //     };
+    // }
 
     #endregion
 }
