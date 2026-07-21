@@ -1,7 +1,12 @@
 fileFormatVersion: 2
+<<<<<<<< HEAD:Assets/Animations/BloodEntity.meta
 guid: 72bd5183c6b05fc4d913145b62296f6b
 folderAsset: yes
 DefaultImporter:
+========
+guid: 7669fcfc03becab49877d0cb170dbff2
+PrefabImporter:
+>>>>>>>> d1fa59c30ef8a09c9d210108d6cc56805c15abbd:Assets/Prefabs/AttackEntity.prefab.meta
   externalObjects: {}
   userData: 
   assetBundleName: 

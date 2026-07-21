@@ -40,6 +40,6 @@ public class BulletEntity : Entity
 
     public override void EntityDestroy()
     {
-        base.EntityDestroy();
+        base.EntityDestroy(); 
     }
 }

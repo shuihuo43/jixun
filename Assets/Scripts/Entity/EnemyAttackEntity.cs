@@ -8,23 +8,33 @@ public class EnemyAttackEntity : MonoBehaviour
     [Header("预警")]
     [SerializeField] private GameObject sectorRangePrefab;
     [SerializeField] private float windupTime = 0.5f;
+    [SerializeField] private float cooldown = 1f;
 
     [Header("攻击区域（仅调试可视化）")]
     [SerializeField] private ShapeArea shapeArea;
 
     private SectorRange activeWarning;
     private float windupTimer;
+    private float cooldownTimer;
     private bool isWindingUp;
 
     public float WindupTime => windupTime;
     public bool IsWindingUp => isWindingUp;
 
-    public void Start()
+    /// <summary>是否正在攻击中（EnemyBrain 读取）</summary>
+    public bool IsAttacking => isWindingUp;
+
+    /// <summary>攻击范围（EnemyBrain 读取）</summary>
+    public float AttackRange => shapeArea != null ? shapeArea.Radius : 0f;
+
+    /// <summary>EnemyBrain 调用：尝试发起攻击</summary>
+    public void TryAttack()
     {
-        StartWindup();
+        if (!isWindingUp && cooldownTimer <= 0f)
+            StartWindup();
     }
 
-    /// <summary>开始攻击前摇，返回风力时间</summary>
+    /// <summary>开始攻击前摇</summary>
     public void StartWindup()
     {
         if (isWindingUp) return;
@@ -35,7 +45,9 @@ public class EnemyAttackEntity : MonoBehaviour
         // 实例化预警
         if (sectorRangePrefab != null)
         {
-            GameObject obj = Instantiate(sectorRangePrefab, transform.position, transform.rotation, transform);
+            // SectorRange mesh 沿 up 开门，enemy 朝向用 right，差 90°
+            Quaternion rot = transform.rotation * Quaternion.Euler(0, 0, -90f);
+            GameObject obj = Instantiate(sectorRangePrefab, transform.position, rot, transform);
             activeWarning = obj.GetComponent<SectorRange>();
             if (activeWarning != null)
             {
@@ -51,6 +63,9 @@ public class EnemyAttackEntity : MonoBehaviour
 
     void Update()
     {
+        if (cooldownTimer > 0f)
+            cooldownTimer -= Time.deltaTime;
+
         if (!isWindingUp) return;
 
         windupTimer += Time.deltaTime;
@@ -69,6 +84,7 @@ public class EnemyAttackEntity : MonoBehaviour
     {
         isWindingUp = false;
         windupTimer = 0f;
+        cooldownTimer = cooldown;
 
         if (activeWarning != null)
         {
