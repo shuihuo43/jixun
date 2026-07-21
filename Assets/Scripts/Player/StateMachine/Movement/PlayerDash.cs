@@ -38,10 +38,10 @@ public class PlayerDash : PlayerState
 
         if (player.Rigidbody2D != null)
         {
-            // 前方碰撞检测，防止高速穿透
+            // 前方碰撞检测，防止高速穿透（忽略贴脸碰撞）
             RaycastHit2D[] hits = new RaycastHit2D[1];
             int hitCount = player.Rigidbody2D.Cast(dashDirection, hits, delta.magnitude);
-            if (hitCount > 0)
+            if (hitCount > 0 && hits[0].distance > 0.01f)
                 delta = dashDirection * hits[0].distance;
 
             player.Rigidbody2D.MovePosition(player.Rigidbody2D.position + delta);
