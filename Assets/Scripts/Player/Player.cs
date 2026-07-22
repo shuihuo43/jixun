@@ -1,3 +1,4 @@
+using System;
 using UnityEngine;
 
 public class Player : MonoBehaviour
@@ -5,6 +6,7 @@ public class Player : MonoBehaviour
     #region 参数
     [Header("玩家资源")]
     [SerializeField]  private PlayerResource playerResource;
+    internal PlayerResource PlayerResource => playerResource;
 
     [Header("武器")]
     [SerializeField] private WeaponResource curWeapon;
@@ -83,6 +85,23 @@ public class Player : MonoBehaviour
 
     private bool canDash = true;
     private float dashCooldownTimer;
+
+    // 精力（运行时状态，配置在 PlayerResource ScriptableObject 中）
+    public event Action OnEnergyChanged;
+    public float CurrentEnergy { get; private set; }
+    public float MaxEnergy => playerResource != null ? playerResource.maxEnergy : 0f;
+    private float energyRecoveryTimer;
+
+    /// <summary>消耗精力，不足返回 false</summary>
+    public bool ConsumeEnergy(float amount)
+    {
+        if (playerResource == null || CurrentEnergy < amount) return false;
+
+        CurrentEnergy -= amount;
+        energyRecoveryTimer = playerResource.recoveryInterval;
+        OnEnergyChanged?.Invoke();
+        return true;
+    }
 
     #endregion
 
@@ -170,6 +189,10 @@ public class Player : MonoBehaviour
         // 动作状态
         new ActionNone("None", this, actionSM, isInit: true);
         new ActionAttack("Attack", this, actionSM);
+
+        // 初始化精力
+        if (playerResource != null)
+            CurrentEnergy = playerResource.maxEnergy;
     }
 
     void Update()
@@ -220,6 +243,24 @@ public class Player : MonoBehaviour
         // 7. 委托双状态机处理
         movementSM.StateUpdate();
         actionSM.StateUpdate();
+
+        // 8. 精力恢复
+        if (playerResource != null && CurrentEnergy < playerResource.maxEnergy)
+        {
+            if (energyRecoveryTimer > 0f)
+            {
+                energyRecoveryTimer -= Time.deltaTime;
+            }
+            else
+            {
+                float prev = CurrentEnergy;
+                CurrentEnergy += playerResource.recoverySpeed * Time.deltaTime;
+                if (CurrentEnergy > playerResource.maxEnergy)
+                    CurrentEnergy = playerResource.maxEnergy;
+                if (CurrentEnergy != prev)
+                    OnEnergyChanged?.Invoke();
+            }
+        }
     }
 
     void FixedUpdate()
@@ -256,6 +297,10 @@ public class Player : MonoBehaviour
     /// <summary>执行冲刺</summary>
     private void ExecuteDash()
     {
+        // 精力不足无法冲刺
+        if (playerResource != null && !ConsumeEnergy(playerResource.dashCost))
+            return;
+
         canDash = false;
         dashCooldownTimer = dashCooldown;
         movementSM.ChangeToState("Dash");
@@ -280,7 +325,7 @@ public class Player : MonoBehaviour
         Vector2 baseDirection = (mouseWorldPos - entitySpawnPoint.position).normalized;
         float baseAngle = Mathf.Atan2(baseDirection.y, baseDirection.x) * Mathf.Rad2Deg;
         float offsetRange = curWeapon != null ? curWeapon.AttackAngleOffset : 0f;
-        float randomAngle = baseAngle + Random.Range(-offsetRange, offsetRange);
+        float randomAngle = baseAngle + UnityEngine.Random.Range(-offsetRange, offsetRange);
         float rad = randomAngle * Mathf.Deg2Rad;
         Vector2 mouseDirection = new Vector2(Mathf.Cos(rad), Mathf.Sin(rad));
 

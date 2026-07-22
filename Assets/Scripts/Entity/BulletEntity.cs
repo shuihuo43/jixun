@@ -15,9 +15,9 @@ public class BulletEntity : Entity
     private float lifeTimer;
 
 
-    public override void EntityBorn(Vector2 position, Vector2 direction, GameObject bornRoot, Vector2? scale = null, bool flipY = false)
+    public override void EntityBorn(Vector2 position, Vector2 direction, GameObject bornRoot, Vector2? scale = null, bool flipY = false, System.Action onDestroy = null)
     {
-        base.EntityBorn(position, direction, bornRoot, scale, flipY);
+        base.EntityBorn(position, direction, bornRoot, scale, flipY, onDestroy);
         moveDirection = direction;
         lifeTimer = lifeTime;
     }

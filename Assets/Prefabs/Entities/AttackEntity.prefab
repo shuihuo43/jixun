@@ -12,9 +12,9 @@ GameObject:
   - component: {fileID: 3901081991777750259}
   - component: {fileID: 9038012016599821854}
   - component: {fileID: 270506489732023661}
-  m_Layer: 0
+  m_Layer: 8
   m_Name: AttackEntity
-  m_TagString: Untagged
+  m_TagString: NormalPlayerAttack
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
@@ -114,9 +114,9 @@ GameObject:
   m_Component:
   - component: {fileID: 5828500266045082583}
   - component: {fileID: 6133700573168620692}
-  m_Layer: 0
+  m_Layer: 8
   m_Name: AttackEffect
-  m_TagString: Untagged
+  m_TagString: NormalPlayerAttack
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0

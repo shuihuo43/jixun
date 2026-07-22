@@ -38,11 +38,25 @@ public class PlayerDash : PlayerState
 
         if (player.Rigidbody2D != null)
         {
-            // 前方碰撞检测，防止高速穿透（忽略贴脸碰撞）
             RaycastHit2D[] hits = new RaycastHit2D[1];
             int hitCount = player.Rigidbody2D.Cast(dashDirection, hits, delta.magnitude);
+
             if (hitCount > 0 && hits[0].distance > 0.01f)
-                delta = dashDirection * hits[0].distance;
+            {
+                float hitDist = hits[0].distance;
+                Vector2 wallNormal = hits[0].normal;
+
+                // 移到墙边
+                Vector2 toWall = dashDirection * hitDist;
+
+                // 剩余距离沿墙滑动
+                float remaining = delta.magnitude - hitDist;
+                Vector2 tangent = new Vector2(-wallNormal.y, wallNormal.x);
+                if (Vector2.Dot(dashDirection, tangent) < 0f)
+                    tangent = -tangent;
+
+                delta = toWall + tangent * remaining * 0.3f;
+            }
 
             player.Rigidbody2D.MovePosition(player.Rigidbody2D.position + delta);
         }

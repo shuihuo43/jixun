@@ -3,7 +3,12 @@
 --- !u!78 &1
 TagManager:
   serializedVersion: 2
-  tags: []
+  tags:
+  - Wall
+  - EnemyAttackEntityRoot
+  - EnemyRoot
+  - Enemy
+  - NormalPlayerAttack
   layers:
   - Default
   - TransparentFX
@@ -11,9 +16,9 @@ TagManager:
   - 
   - Water
   - UI
-  - enemy
-  - 
-  - 
+  - Enemy
+  - Player
+  - PlayerAttack
   - 
   - Wall
   - 

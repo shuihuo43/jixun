@@ -120,10 +120,10 @@ public class RoomSpawner : MonoBehaviour
         aliveEnemies.Add(enemy);
 
 
-        // 兼容旧 Enemy 和新 EnemyBrain 两种敌人系统
-        Enemy enemyScript = enemy.GetComponent<Enemy>();
-        if (enemyScript != null)
-            enemyScript.OnDeath += RemoveEnemy;
+        //// 兼容旧 Enemy 和新 EnemyBrain 两种敌人系统
+        //Enemy enemyScript = enemy.GetComponent<Enemy>();
+        //if (enemyScript != null)
+        //    enemyScript.OnDeath += RemoveEnemy;
 
     }
 

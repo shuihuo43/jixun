@@ -49,7 +49,7 @@ MonoBehaviour:
   speed: 50
   speedOffset: 50
   angleOffset: 45
-  stampDuration: 0.035
+  stampDuration: 0.015
 --- !u!95 &3910837765491202764
 Animator:
   serializedVersion: 5

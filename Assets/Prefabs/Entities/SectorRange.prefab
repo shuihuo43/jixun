@@ -46,18 +46,14 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 34a4db717e494e440bf6d4a9293af1e2, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  warningShape: 0
-  angle: 176
-  radius: 5.45
-  innerRadius: 0
-  quality: 60
-  process: 1
+  entityPrefab: {fileID: 0}
+  isDebug: 0
+  directionOffset: -90
+  shapeArea: {fileID: 0}
   outerMaterial: {fileID: 2100000, guid: 11fb69f974205f2439dc9f2ebb045c4d, type: 2}
-  outerColor: {r: 1, g: 0.89954376, b: 0, a: 1}
+  outerColor: {r: 1, g: 1, b: 1, a: 1}
   innerMaterial: {fileID: 2100000, guid: f34fac0a899284e4f81c888b579f4495, type: 2}
-  innerColor: {r: 1, g: 0, b: 0.19155788, a: 1}
-  boxWidth: 2
-  boxHeight: 1
+  innerColor: {r: 1, g: 0, b: 0.19215679, a: 1}
 --- !u!33 &7579080301448796372
 MeshFilter:
   m_ObjectHideFlags: 0

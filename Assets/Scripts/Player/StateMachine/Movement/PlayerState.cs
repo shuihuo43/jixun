@@ -14,8 +14,34 @@ public class PlayerState
         stateMachine.StateRegist(this, name, isInit);
     }
 
-    public virtual void StateEnter() { }
+    private PlayerStatePanel panel;
+
+    public virtual void StateEnter()
+    {
+        if (panel == null)
+            panel = Object.FindObjectOfType<PlayerStatePanel>();
+
+        if (panel != null && player.PlayerResource != null)
+        {
+            panel.SetDashCost(player.PlayerResource.dashCost, player.PlayerResource.maxEnergy);
+            panel.UpdateEnergy(player.CurrentEnergy, player.MaxEnergy);
+        }
+
+        player.OnEnergyChanged += UpdateEnergy;
+    }
+
     public virtual void StateUpdate() { }
     public virtual void StateFixedUpdate() { }
-    public virtual void StateExit() { }
+
+    public virtual void StateExit()
+    {
+        player.OnEnergyChanged -= UpdateEnergy;
+    }
+
+    /// <summary>精力变化回调，自动同步 UI 面板</summary>
+    protected virtual void UpdateEnergy()
+    {
+        if (panel != null && player.PlayerResource != null)
+            panel.UpdateEnergy(player.CurrentEnergy, player.MaxEnergy);
+    }
 }
