@@ -17,3 +17,4 @@ MonoBehaviour:
   AttackDuration: 0.1
   AttackRecovery: 0.05
   AttackAngleOffset: 45
+  damageResource: {fileID: 11400000, guid: 318803aa2aaceb54b9ea07e2022cd5f5, type: 2}

@@ -12,6 +12,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 35068a9be51241f4dae59e5859a47256, type: 3}
   m_Name: PlayerResource
   m_EditorClassIdentifier: 
+  maxHealth: 1000
+  currentHealth: 100
   maxEnergy: 100
   dashCost: 20
   recoveryInterval: 0.5

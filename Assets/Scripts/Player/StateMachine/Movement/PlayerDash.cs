@@ -12,12 +12,23 @@ public class PlayerDash : PlayerState
     {
         base.StateEnter();
 
+        player.cameraController?.Shake(1f, 1f, 0.15f);
+
+        AudioManager.Instance?.PlaySFX(player.dashClip, player.dashVolume);
+
+        if (player.HurtCollider != null)
+            player.HurtCollider.enabled = false;
+        player.canBeHurt = false;
+
         dashDirection = player.MoveInput != Vector2.zero
             ? player.MoveInput
             : player.PreMovementNotZero;
 
         dashTimer = player.DashDuration;
         player.IsDashing = true;
+
+        if (player.Rigidbody2D != null)
+            player.Rigidbody2D.velocity = dashDirection * player.DashSpeed;
     }
 
     public override void StateUpdate()
@@ -38,24 +49,19 @@ public class PlayerDash : PlayerState
 
         if (player.Rigidbody2D != null)
         {
+            var filter = new ContactFilter2D { useTriggers = false };
             RaycastHit2D[] hits = new RaycastHit2D[1];
-            int hitCount = player.Rigidbody2D.Cast(dashDirection, hits, delta.magnitude);
+            int hitCount = player.Rigidbody2D.Cast(dashDirection, filter, hits, delta.magnitude);
 
             if (hitCount > 0 && hits[0].distance > 0.01f)
             {
                 float hitDist = hits[0].distance;
                 Vector2 wallNormal = hits[0].normal;
-
-                // 移到墙边
                 Vector2 toWall = dashDirection * hitDist;
-
-                // 剩余距离沿墙滑动
                 float remaining = delta.magnitude - hitDist;
                 Vector2 tangent = new Vector2(-wallNormal.y, wallNormal.x);
-                if (Vector2.Dot(dashDirection, tangent) < 0f)
-                    tangent = -tangent;
-
-                delta = toWall + tangent * remaining * 0.3f;
+                if (Vector2.Dot(dashDirection, tangent) < 0f) tangent = -tangent;
+                delta = toWall + tangent * remaining;
             }
 
             player.Rigidbody2D.MovePosition(player.Rigidbody2D.position + delta);
@@ -69,6 +75,7 @@ public class PlayerDash : PlayerState
     public override void StateExit()
     {
         base.StateExit();
+        player.dashAttackBuffer = 0.05f;
         player.IsDashing = false;
         dashTimer = -1f;
     }

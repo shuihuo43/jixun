@@ -11,9 +11,9 @@ public class BloodFlyEntity : Entity
     private float flySpeed;
     private float stampTimer;
 
-    public override void EntityBorn(Vector2 position, Vector2 direction, GameObject bornRoot, Vector2? scale = null, bool flipY = false, System.Action onDestroy = null)
+    public override void EntityBorn(Vector2 position, Vector2 direction, GameObject bornRoot, Vector2? scale = null, bool flipY = false, System.Action onDestroy = null, GameObject ownerObj = null)
     {
-        base.EntityBorn(position, direction, bornRoot, scale, flipY, onDestroy);
+        base.EntityBorn(position, direction, bornRoot, scale, flipY, onDestroy, ownerObj);
 
         // 随机角度偏移
         float baseAngle = Mathf.Atan2(direction.y, direction.x) * Mathf.Rad2Deg;

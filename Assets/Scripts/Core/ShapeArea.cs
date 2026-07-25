@@ -42,6 +42,43 @@ public class ShapeArea : MonoBehaviour
     public float BoxWidth => width;
     public float BoxHeight => height;
 
+    /// <summary>检测范围内是否有指定 tag 的物体，返回第一个或 null</summary>
+    public GameObject DetectTag(string tag)
+    {
+        Vector3 worldCenter = LocalToWorld(centerOffset);
+        float checkRadius = shapeType == ShapeType.Sector ? radius : Mathf.Max(width, height);
+
+        var hits = Physics2D.OverlapCircleAll(worldCenter, checkRadius);
+        foreach (var hit in hits)
+        {
+            if (!hit.CompareTag(tag)) continue;
+            if (!IsInsideShape(hit.transform.position)) continue;
+            return hit.gameObject;
+        }
+        return null;
+    }
+
+    bool IsInsideShape(Vector3 worldPos)
+    {
+        Vector3 local = transform.InverseTransformPoint(worldPos);
+        local -= (Vector3)centerOffset;
+
+        float dist = local.magnitude;
+        if (dist < 0.01f) return true;
+
+        if (shapeType == ShapeType.Sector)
+        {
+            if (dist > radius) return false;
+            float a = Mathf.Atan2(local.y, local.x) * Mathf.Rad2Deg;
+            float half = angle / 2f;
+            return Mathf.Abs(Mathf.DeltaAngle(0f, a)) <= half;
+        }
+        else
+        {
+            return Mathf.Abs(local.x) <= width / 2f && Mathf.Abs(local.y) <= height / 2f;
+        }
+    }
+
     /// <summary>将图形局部坐标转为世界坐标（绕实体位置旋转 direction°，再经实体 transform）</summary>
     private Vector3 LocalToWorld(Vector2 localPoint)
     {

@@ -9,6 +9,8 @@ TagManager:
   - EnemyRoot
   - Enemy
   - NormalPlayerAttack
+  - Camera
+  - Mouse
   layers:
   - Default
   - TransparentFX
@@ -19,10 +21,10 @@ TagManager:
   - Enemy
   - Player
   - PlayerAttack
-  - 
+  - EnemyAttack
   - Wall
-  - 
-  - 
+  - PlayerHurt
+  - ElementAttack
   - 
   - 
   - 

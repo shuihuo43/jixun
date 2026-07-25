@@ -8,16 +8,19 @@ public class Enemy : MonoBehaviour
     public EnemyPathfinding pathfinding;
     [SerializeField] private Collider2D hitCollider;
 
+    [Header("资源")]
+    public EnemyResource resource;
 
     [Header("朝向")]
     public Transform rotateRoot;
 
-
     [Header("属性")]
-    public float maxHealth = 50f;
-    public float currentHealth;
     public float moveSpeed = 3f;
     public float turnSpeed = 360f;
+
+    [Header("音效")]
+    [SerializeField] private AudioClip hurtClip;
+    [SerializeField] private float hurtVolume = 0.8f;
     public float knockbackForce = 5f;
     public float knockbackAngleOffset = 15f;
 
@@ -66,8 +69,16 @@ public class Enemy : MonoBehaviour
 
         rb = GetComponent<Rigidbody2D>();
 
-        currentHealth = maxHealth;
-
+        if (resource != null)
+        {
+            resource = Instantiate(resource);
+            resource.currentHealth = resource.maxHealth;
+            resource.OnDeath += () =>
+            {
+                Debug.Log("Enemy: OnDeath fired, switching to Death state");
+                stateMachine.ChangeToState("Death");
+            };
+        }
 
         GameObject obj =
             GameObject.FindGameObjectWithTag("Player");
@@ -81,6 +92,8 @@ public class Enemy : MonoBehaviour
 
     void Update()
     {
+        if (stateMachine.CurrentStateName == "Death") return;
+
         UpdateAttackCooldown();
 
         UpdateRotation();
@@ -266,11 +279,7 @@ public class Enemy : MonoBehaviour
 
     public void TakeDamage(float damage)
     {
-        currentHealth -= damage;
-
-
-        if (currentHealth < 0)
-            currentHealth = 0;
+        resource?.ChangeHealth(-damage);
     }
 
 
@@ -278,24 +287,30 @@ public class Enemy : MonoBehaviour
 
     void OnTriggerEnter2D(Collider2D other)
     {
-        if (other.gameObject.layer !=
-           LayerMask.NameToLayer("PlayerAttack"))
-            return;
+        if (stateMachine.CurrentStateName == "Death") return;
 
+        int layer = other.gameObject.layer;
+        bool isPlayerAtk = layer == LayerMask.NameToLayer("PlayerAttack");
+        bool isElementAtk = layer == LayerMask.NameToLayer("ElementAttack");
+        if (!isPlayerAtk && !isElementAtk) return;
 
         string key = other.tag;
-
-
-        if (hitRecords.TryGetValue(key, out float time))
-        {
-            if (Time.time < time)
-                return;
-        }
-
-
+        if (hitRecords.TryGetValue(key, out float t) && Time.time < t) return;
         hitRecords[key] = Time.time + 0.05f;
 
-        TakeDamage(10);
+        Entity source = other.GetComponent<Entity>();
+        float dmg = source?.damageResource != null ? source.damageResource.baseDamageValue : 1f;
+        TakeDamage(dmg);
+
+        if (source?.owner != null)
+        {
+            var p = source.owner.GetComponent<Player>();
+            if (p != null) { p.combo++; p.comboTime = p.comboMaxTime; }
+        }
+
+        AudioManager.Instance?.PlaySFX(hurtClip, hurtVolume);
+
+        if (!isPlayerAtk) return;
 
         if (rb != null)
         {

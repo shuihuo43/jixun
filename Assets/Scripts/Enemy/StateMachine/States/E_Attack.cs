@@ -3,25 +3,17 @@ using UnityEngine;
 public class E_Attack : EnemyState
 {
     public GameObject attackPrefab;
-
     public float windup = 0.25f;
 
-
     private float timer;
-
     private bool fired;
-
-
 
     public override void StateEnter()
     {
         timer = windup;
         fired = false;
-
         enemy.moveDir = Vector2.zero;
     }
-
-
 
     public override void StateUpdate()
     {
@@ -32,46 +24,26 @@ public class E_Attack : EnemyState
         if (timer <= 0 && !fired)
         {
             fired = true;
-            Attack();
+            OnAttack();
         }
     }
 
-
-
-    void Attack()
+    protected virtual void OnAttack()
     {
         enemy.StartAttackCooldown();
 
-
-        GameObject obj =
-            Instantiate(
-                attackPrefab,
-                enemy.transform.position,
-                Quaternion.identity);
-
-
-        SectorRange range =
-            obj.GetComponent<SectorRange>();
-
-
+        GameObject obj = Instantiate(attackPrefab, enemy.transform.position, Quaternion.identity);
+        SectorRange range = obj.GetComponent<SectorRange>();
         if (range)
         {
-            range.EntityBorn(
-                Vector2.zero,
-                enemy.faceDir,
-                enemy.gameObject,
-                onDestroy: EndAttack);
-
-
-            range.StartWindup(
-                enemy.attackShape,
-                0.5f);
+            range.EntityBorn(Vector2.zero, enemy.faceDir, enemy.gameObject, onDestroy: OnAttackEnd);
+            return;
         }
+
+        OnAttackEnd();
     }
 
-
-
-    void EndAttack()
+    protected virtual void OnAttackEnd()
     {
         stateMachine.ChangeToState("Engage");
     }

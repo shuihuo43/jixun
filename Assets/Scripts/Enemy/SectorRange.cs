@@ -12,8 +12,11 @@ public class SectorRange : Entity
 
     [Header("调试")]
     [SerializeField] private bool isDebug;
-    [SerializeField] private float directionOffset = -90f;  // mesh 沿 up，实体朝 right，补 90°
+    [SerializeField] private float directionOffset = -90f;
+    [SerializeField] private float windupDuration = 0.5f;
     public ShapeArea shapeArea;
+
+    private bool bornCalled;
 
     // 运行时状态
     private WarningShape warningShape;
@@ -32,18 +35,31 @@ public class SectorRange : Entity
 
     [Header("材质")]
     [SerializeField] private Material outerMaterial;
-    [SerializeField] private Color outerColor = new Color(1, 1, 1, 0.3f);
+    [SerializeField] private Color outerColor = Color.white;
     [SerializeField] private Material innerMaterial;
-    [SerializeField] private Color innerColor = new Color(1, 0, 0, 0.6f);
+    [SerializeField] private Color innerStartColor = Color.green;
+    [SerializeField] private Color innerEndColor = Color.red;
+
 
     void Start()
     {
+        outerColor.a = 0.5f;
+        innerStartColor.a = 0.6f;
+        innerEndColor.a = 0.6f;
         if (isDebug)
         {
-            EntityBorn(Vector2.zero, Vector2.right, transform.parent != null ? transform.parent.gameObject : gameObject);
+            base.EntityBorn(Vector2.zero, Vector2.right, transform.parent != null ? transform.parent.gameObject : gameObject);
             if (shapeArea == null) shapeArea = gameObject.AddComponent<ShapeArea>();
-            StartWindup(shapeArea, 1f);
+            StartWindup(shapeArea, windupDuration);
         }
+    }
+
+    public override void EntityBorn(Vector2 position, Vector2 direction, GameObject bornRoot, Vector2? scale = null, bool flipY = false, System.Action onDestroy = null, GameObject ownerObj = null)
+    {
+        base.EntityBorn(position, direction, bornRoot, scale, flipY, onDestroy, ownerObj);
+
+        if (!isDebug && shapeArea != null)
+            StartWindup(shapeArea, windupDuration);
     }
 
     /// <summary>开始预警：传入形状和持续时间，自动推进并在结束时生成 entityPrefab</summary>
@@ -82,18 +98,19 @@ public class SectorRange : Entity
 
         timer += Time.deltaTime;
         float progress = Mathf.Clamp01(timer / windupTime);
+        Color currentInnerColor = Color.Lerp(innerStartColor, innerEndColor, progress);
 
         if (warningShape == WarningShape.Box)
         {
             float fillWidth = boxWidth * progress;
             ApplyBoxMesh(outerFilter, outerRenderer, ref outerInst, outerMaterial, outerColor, boxWidth, boxHeight, 0);
-            ApplyBoxMesh(innerFilter, innerRenderer, ref innerInst, innerMaterial, innerColor, fillWidth, boxHeight, 1);
+            ApplyBoxMesh(innerFilter, innerRenderer, ref innerInst, innerMaterial, currentInnerColor, fillWidth, boxHeight, 1);
         }
         else
         {
             float innerLayerRadius = Mathf.Lerp(innerRadius, radius, progress);
             ApplyLayer(outerObj, outerFilter, outerRenderer, ref outerInst, outerMaterial, outerColor, angle, radius);
-            ApplyLayer(innerObj, innerFilter, innerRenderer, ref innerInst, innerMaterial, innerColor, angle, innerLayerRadius);
+            ApplyLayer(innerObj, innerFilter, innerRenderer, ref innerInst, innerMaterial, currentInnerColor, angle, innerLayerRadius);
         }
 
         if (progress >= 1f)
@@ -116,7 +133,7 @@ public class SectorRange : Entity
 
                 // SectorRange 世界坐标转 root 本地坐标，朝向保持 SectorRange 自身
                 Vector2 localPos = root.transform.InverseTransformPoint(transform.position);
-                entity.EntityBorn(localPos, bornDirection, root);
+                entity.EntityBorn(localPos, bornDirection, root, ownerObj: owner);
             }
         }
 
@@ -241,10 +258,11 @@ public class SectorRange : Entity
 
     Mesh BuildBoxMesh(float w, float h)
     {
-        float hw = w / 2f, hh = h / 2f;
+        float hh = h / 2f;
         var mesh = new Mesh();
+        // Y 轴 = 朝向，从原点沿朝向推进
         mesh.vertices = new Vector3[] {
-            new(-hh, -hw), new(hh, -hw), new(hh, hw), new(-hh, hw)
+            new(-hh, 0f), new(hh, 0f), new(hh, w), new(-hh, w)
         };
         mesh.triangles = new int[] { 0, 2, 1, 0, 3, 2 };
         mesh.uv = new Vector2[] { new(0, 0), new(1, 0), new(1, 1), new(0, 1) };

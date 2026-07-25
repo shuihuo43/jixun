@@ -15,10 +15,8 @@ public class PlayerRun : PlayerState
     {
         base.StateUpdate();
 
-        // 攻击期间锁定状态，攻击结束再判断
         if (player.IsAttacking) return;
 
-        // 松空格 → 回到移动
         if (!Input.GetKey(KeyCode.Space))
         {
             if (player.MoveInput != Vector2.zero)
@@ -32,6 +30,36 @@ public class PlayerRun : PlayerState
     {
         base.StateFixedUpdate();
         player.ApplyMovement(player.RunSpeed);
+        TrySpawn();
+    }
+
+    void TrySpawn()
+    {
+        var prefs = player.runSpawnPrefabs;
+        if (prefs == null || prefs.Length == 0) return;
+
+        float perDelay = player.runSpawnInterval / prefs.Length;
+        player.runSpawnTimer -= Time.fixedDeltaTime;
+        if (player.runSpawnTimer <= 0f)
+        {
+            player.runSpawnTimer = player.runSpawnInterval;
+            player.runSpawnIndex = -1;
+        }
+
+        float elapsed = player.runSpawnInterval - player.runSpawnTimer;
+        int idx = Mathf.FloorToInt(elapsed / perDelay);
+        if (idx > player.runSpawnIndex)
+        {
+            player.runSpawnIndex = idx;
+            var prefab = prefs[idx % prefs.Length];
+            if (prefab != null)
+            {
+                var obj = Object.Instantiate(prefab, player.transform.position, Quaternion.identity);
+                var entity = obj.GetComponent<Entity>();
+                if (entity != null)
+                    entity.EntityBorn(player.transform.position, player.PreMovementNotZero, player.entityRoot, ownerObj: player.gameObject);
+            }
+        }
     }
 
     public override void StateExit()

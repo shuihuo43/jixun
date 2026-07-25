@@ -18,6 +18,7 @@ public class WeaponResource : ScriptableObject
     [SerializeField] public float AttackDuration = 0.3f;
     [SerializeField] public float AttackRecovery = 0.1f;
     [SerializeField] public float AttackAngleOffset = 0f;
+    public DamageResource damageResource;
 
     /// <summary>攻击总时长（含后摇）</summary>
     public float TotalDuration => AttackDuration + AttackRecovery;

@@ -27,7 +27,7 @@ public class EnemyPathfinding : MonoBehaviour
         {
             if (!tm.CompareTag("Wall")) continue;
             tilemap = tm;
-            //Debug.Log($"Pathfinding: using Tilemap '{tm.name}', cellSize={tm.cellSize}, cellBounds={tm.cellBounds}");
+            Debug.Log($"Pathfinding: using Tilemap '{tm.name}', cellSize={tm.cellSize}, cellBounds={tm.cellBounds}");
 
             var cb = tm.cellBounds;
             for (int x = cb.xMin; x < cb.xMax; x++)

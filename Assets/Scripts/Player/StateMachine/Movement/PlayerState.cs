@@ -28,6 +28,10 @@ public class PlayerState
         }
 
         player.OnEnergyChanged += UpdateEnergy;
+
+        if (player.HurtCollider != null)
+            player.HurtCollider.enabled = true;
+        player.canBeHurt = true;
     }
 
     public virtual void StateUpdate() { }

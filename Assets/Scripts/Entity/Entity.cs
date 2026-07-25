@@ -6,7 +6,16 @@ using UnityEngine;
 /// </summary>
 public class Entity : MonoBehaviour
 {
+    public DamageResource damageResource;
+
+    [Header("音效")]
+    [SerializeField] protected AudioClip bornClip;
+    [SerializeField] protected float bornVolume = 0.8f;
+
     private Action onDestroyCallback;
+
+    /// <summary>递归持有者：生成链最顶端的角色</summary>
+    public GameObject owner { get; protected set; }
 
     public virtual void EntityBorn(
         Vector2 position,
@@ -14,7 +23,8 @@ public class Entity : MonoBehaviour
         GameObject bornRoot,
         Vector2? scale = null,
         bool flipY = false,
-        Action onDestroy = null)
+        Action onDestroy = null,
+        GameObject ownerObj = null)
     {
         transform.SetParent(bornRoot.transform);
         transform.localPosition = position;
@@ -26,7 +36,19 @@ public class Entity : MonoBehaviour
         if (flipY) finalScale.y *= -1f;
         transform.localScale = new Vector3(finalScale.x, finalScale.y, 1f);
 
+        // owner：传入优先，否则递归继承，否则 bornRoot 本身
+        if (ownerObj != null)
+            owner = ownerObj;
+        else if (bornRoot != null)
+        {
+            var parentEntity = bornRoot.GetComponent<Entity>();
+            owner = parentEntity != null ? parentEntity.owner : bornRoot;
+        }
+
         onDestroyCallback = onDestroy;
+
+        if (bornClip != null)
+            AudioManager.Instance?.PlaySFX(bornClip, bornVolume);
     }
 
     public virtual void EntityDestroy()

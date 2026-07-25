@@ -46,6 +46,9 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 8ebb9557d21340444910fb9dbc8c78d7, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  damageResource: {fileID: 0}
+  bornClip: {fileID: 0}
+  bornVolume: 0.8
   speed: 50
   speedOffset: 50
   angleOffset: 45

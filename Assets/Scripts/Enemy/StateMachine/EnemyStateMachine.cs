@@ -39,6 +39,13 @@ public class EnemyStateMachine : MonoBehaviour
 
     public void ChangeToState(string name)
     {
+        // 死了别再切状态
+        if (CurrentStateName == "Death" && name != "Death")
+        {
+            Debug.LogWarning($"EnemyStateMachine: 拒绝从 Death 切换到 '{name}'");
+            return;
+        }
+
         if (!states.TryGetValue(name, out var next))
         {
             Debug.LogError($"EnemyStateMachine: 状态 '{name}' 未注册");

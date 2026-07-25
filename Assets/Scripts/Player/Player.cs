@@ -1,45 +1,39 @@
 using System;
 using UnityEngine;
 
+[DefaultExecutionOrder(-100)]
 public class Player : MonoBehaviour
 {
     #region 参数
-    [Header("玩家资源")]
-    [SerializeField]  private PlayerResource playerResource;
-    internal PlayerResource PlayerResource => playerResource;
 
-    [Header("武器")]
+    [Header("组件 & 资源")]
+    [SerializeField] private PlayerResource playerResource;
     [SerializeField] private WeaponResource curWeapon;
+    [SerializeField] private Collider2D hurtCollider;
+    [SerializeField] internal Transform rotateRoot;
+    internal PlayerResource PlayerResource => playerResource;
+    internal Collider2D HurtCollider => hurtCollider;
 
-
-    [Header("移动参数")]
+    [Header("移动")]
     [SerializeField] private float moveSpeed = 12f;
     [SerializeField] private float runSpeed = 16f;
     [SerializeField] private float dashSpeed = 35f;
     [SerializeField] private float dashDuration = 0.2f;
     [SerializeField] private float dashCooldown = 0.3f;
-
-    [Header("冲刺收尾")]
-    [Range(0f, 1f)]
-    [SerializeField] private float dashEndSpeedRetention = 0.5f;
+    [Range(0f, 1f)] [SerializeField] private float dashEndSpeedRetention = 0.5f;
     [SerializeField] private float dashEndDecelerationTime = 0.1f;
-
-    [Header("手感参数")]
     [SerializeField] private float accelerationTime = 0.05f;
     [SerializeField] private float decelerationTime = 0.03f;
 
-    [SerializeField] private Transform rotateRoot;
+    [Header("冲刺攻击")]
+    [SerializeField] internal GameObject dashAttackEntityPrefab;
+    [SerializeField] internal float dashAttackSpeed = 25f;
+    [SerializeField] internal float dashAttackDuration = 0.15f;
 
-    [Header("生命值")]
-    [SerializeField] private float maxHealth = 100f;
-    [SerializeField] private float currentHealth = 100f;
-
-    [Header("实体")]
-    [SerializeField] private GameObject entityRoot;
+    [Header("攻击 & 实体")]
+    [SerializeField] internal GameObject entityRoot;
     [SerializeField] private GameObject entityPrefab;
     [SerializeField] private Transform entitySpawnPoint;
-
-    [Header("攻击")]
     [SerializeField] private float attackDuration = 0.3f;
     [SerializeField] private float attackScale = 1f;
     [SerializeField] private float slowMoveSpeed = 3f;
@@ -47,6 +41,16 @@ public class Player : MonoBehaviour
     [SerializeField] private bool whenAttackMove = true;
     [SerializeField] private bool whenAttackRun = true;
 
+    [Header("奔跑相关")]
+    [SerializeField] internal GameObject[] runSpawnPrefabs;
+    [SerializeField] internal float runSpawnInterval = 1f;
+
+    [Header("生命值")]
+    [SerializeField] private float maxHealth = 100f;
+    [SerializeField] private float currentHealth = 100f;
+
+    internal float runSpawnTimer;
+    internal int runSpawnIndex;
 
     #endregion
 
@@ -82,11 +86,25 @@ public class Player : MonoBehaviour
 
     private Rigidbody2D rb;
     internal Rigidbody2D Rigidbody2D => rb;
+    [Header("音效")]
+    [SerializeField] private AudioClip hurtClip;
+    [SerializeField] private float hurtVolume = 0.8f;
+    [SerializeField] internal AudioClip dashClip;
+    [SerializeField] internal float dashVolume = 0.8f;
 
-    private bool canDash = true;
+    internal bool canBeHurt = true;
+    internal float dashAttackBuffer;
+    public int combo;
+    public float comboTime { get; set; }
+    public float comboMaxTime = 2f;
+
+    public CameraController cameraController;
+
+    internal bool canDash = true;
     private float dashCooldownTimer;
 
     // 精力（运行时状态，配置在 PlayerResource ScriptableObject 中）
+    public event Action OnHealthChanged;
     public event Action OnEnergyChanged;
     public float CurrentEnergy { get; private set; }
     public float MaxEnergy => playerResource != null ? playerResource.maxEnergy : 0f;
@@ -183,6 +201,7 @@ public class Player : MonoBehaviour
         new PlayerIdle("Idle", this, movementSM, isInit: true);
         new PlayerMove("Move", this, movementSM);
         new PlayerDash("Dash", this, movementSM);
+        new PlayerDashAttack("DashAttack", this, movementSM);
         new PlayerRun("Run", this, movementSM);
         new PlayerSlowMove("SlowMove", this, movementSM);
 
@@ -190,13 +209,25 @@ public class Player : MonoBehaviour
         new ActionNone("None", this, actionSM, isInit: true);
         new ActionAttack("Attack", this, actionSM);
 
-        // 初始化精力
+        // 相机引用
+        var camObj = GameObject.FindGameObjectWithTag("Camera");
+        if (camObj != null)
+            cameraController = camObj.GetComponent<CameraController>();
+
+        // 运行时拷贝资源，不污染原 ScriptableObject
         if (playerResource != null)
+        {
+            playerResource = Instantiate(playerResource);
+            playerResource.OnHealthChanged += () => OnHealthChanged?.Invoke();
             CurrentEnergy = playerResource.maxEnergy;
+            playerResource.currentHealth = playerResource.maxHealth;
+        }
     }
 
     void Update()
     {
+        if (GameManager.Instance != null && GameManager.Instance.CurrentState != GameManager.GameState.Playing) return;
+
         // 1. 鼠标跟随
         Utilties.FollowMouse(rotateRoot, 90, 0);
 
@@ -216,19 +247,35 @@ public class Player : MonoBehaviour
                 canDash = true;
         }
 
-        // 4. 预输入：冲刺（优先级高于攻击，可打断）
+        // 4. 冲刺（优先级最高，可打断攻击和冲刺攻击）
         if (Input.GetKeyDown(KeyCode.Space))
         {
+            // 冲刺攻击中按空格 → 切回冲刺（查能量，不查冷却）
+            if (movementSM.CurrentStateName == "DashAttack")
+            {
+                if (playerResource == null || ConsumeEnergy(playerResource.dashCost))
+                    movementSM.ChangeToState("Dash");
+                return;
+            }
+
             if (canDash && !IsDashing)
             {
-                if (IsAttacking) actionSM.ChangeToState("None"); // 打断攻击
+                if (IsAttacking) actionSM.ChangeToState("None");
                 ExecuteDash();
             }
             else if (!canDash || IsDashing)
                 SetBuffer(BufferedInput.Dash);
         }
 
-        // 5. 预输入：攻击
+        // 5. 冲刺攻击（冲刺中 或 缓冲期内）
+        dashAttackBuffer -= Time.deltaTime;
+        if (Input.GetMouseButtonDown(0) && (IsDashing || dashAttackBuffer > 0f))
+        {
+            movementSM.ChangeToState("DashAttack");
+            return;
+        }
+
+        // 6. 预输入：攻击
         if (Input.GetMouseButtonDown(0))
         {
             if (!IsAttacking && !IsDashing)
@@ -237,14 +284,21 @@ public class Player : MonoBehaviour
                 SetBuffer(BufferedInput.Attack);
         }
 
-        // 6. 处理预输入缓冲
+        // 7. 处理预输入缓冲
         ProcessBuffer();
 
-        // 7. 委托双状态机处理
+        // 8. 委托双状态机处理
         movementSM.StateUpdate();
         actionSM.StateUpdate();
 
-        // 8. 精力恢复
+        // 8. 连击计时
+        if (combo > 0)
+        {
+            comboTime -= Time.deltaTime;
+            if (comboTime <= 0f) combo = 0;
+        }
+
+        // 9. 精力恢复
         if (playerResource != null && CurrentEnergy < playerResource.maxEnergy)
         {
             if (energyRecoveryTimer > 0f)
@@ -337,6 +391,9 @@ public class Player : MonoBehaviour
         if (attackEntity != null)
         {
             attackEntity.AttackBorn(curWeapon, localPos, mouseDirection, entityRoot, new Vector2(attackScale, attackScale), flipY);
+            attackEntity.EntityBorn(localPos, mouseDirection, entityRoot, ownerObj: gameObject);
+            if (curWeapon != null)
+                attackEntity.damageResource = curWeapon.damageResource;
         }
     }
 
@@ -418,6 +475,23 @@ public class Player : MonoBehaviour
     {
         currentHealth += amount;
         currentHealth = Mathf.Clamp(currentHealth, 0f, maxHealth);
+    }
+
+    void OnTriggerEnter2D(Collider2D other)
+    {
+        if (other.gameObject.layer != LayerMask.NameToLayer("EnemyAttack")) return;
+        Entity src = other.GetComponent<Entity>();
+        Hurt(src);
+    }
+
+    public void Hurt(Entity source)
+    {
+        if (!canBeHurt) return;
+
+        float damage = source?.damageResource != null ? source.damageResource.baseDamageValue : 1f;
+        playerResource.ChangeHealth(-damage);
+        AudioManager.Instance?.PlaySFX(hurtClip, hurtVolume);
+        cameraController?.Shake(12f, 8f, 0.2f);
     }
 
     #endregion

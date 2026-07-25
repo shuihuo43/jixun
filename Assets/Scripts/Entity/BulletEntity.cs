@@ -9,15 +9,12 @@ public class BulletEntity : Entity
     [Header("碰撞体（IsTrigger = true）")]
     [SerializeField] private Collider2D bulletCollider;
 
-    public GameObject owner;
-
     private Vector2 moveDirection;
     private float lifeTimer;
 
-
-    public override void EntityBorn(Vector2 position, Vector2 direction, GameObject bornRoot, Vector2? scale = null, bool flipY = false, System.Action onDestroy = null)
+    public override void EntityBorn(Vector2 position, Vector2 direction, GameObject bornRoot, Vector2? scale = null, bool flipY = false, System.Action onDestroy = null, GameObject ownerObj = null)
     {
-        base.EntityBorn(position, direction, bornRoot, scale, flipY, onDestroy);
+        base.EntityBorn(position, direction, bornRoot, scale, flipY, onDestroy, ownerObj);
         moveDirection = direction;
         lifeTimer = lifeTime;
     }
@@ -35,6 +32,10 @@ public class BulletEntity : Entity
 
     void OnTriggerEnter2D(Collider2D other)
     {
+        // 忽略生成者和同类子弹
+        if (owner != null && other.gameObject == owner) return;
+        if (other.GetComponent<BulletEntity>() != null) return;
+
         EntityDestroy();
     }
 
