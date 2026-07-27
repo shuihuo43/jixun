@@ -26,9 +26,6 @@ public class PlayerDash : PlayerState
 
         dashTimer = player.DashDuration;
         player.IsDashing = true;
-
-        if (player.Rigidbody2D != null)
-            player.Rigidbody2D.velocity = dashDirection * player.DashSpeed;
     }
 
     public override void StateUpdate()

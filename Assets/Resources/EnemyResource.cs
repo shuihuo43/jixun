@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using UnityEngine;
 
 [CreateAssetMenu(fileName = "EnemyResource", menuName = "Resource/EnemyResource")]
@@ -11,6 +12,7 @@ public class EnemyResource : ScriptableObject
     public event Action OnDeath;
 
     private bool dead;
+    public Dictionary<DebuffType, int> statusDict = new();
 
     public void ChangeHealth(float delta)
     {
@@ -24,5 +26,16 @@ public class EnemyResource : ScriptableObject
             dead = true;
             OnDeath?.Invoke();
         }
+    }
+
+    public void ApplyDebuffs(Dictionary<DebuffType, int> debuffs)
+    {
+        if (debuffs == null) return;
+        foreach (var kv in debuffs)
+        {
+            statusDict.TryGetValue(kv.Key, out int cur);
+            statusDict[kv.Key] = cur + kv.Value;
+        }
+        OnHealthChanged?.Invoke();
     }
 }

@@ -14,7 +14,7 @@ public class E_Follow : EnemyState
         // 连线通畅 → 交战
         if (HasLineOfSight())
         {
-            stateMachine.ChangeToState("Engage");
+            stateMachine.ChangeToState(enemy.EngageStateName);
             return;
         }
 

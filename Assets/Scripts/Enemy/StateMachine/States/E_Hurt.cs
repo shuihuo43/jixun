@@ -53,7 +53,7 @@ public class E_Hurt : EnemyState
                 spriteObj.transform.localPosition = Vector2.Lerp(-knockDir * knockbackDistance, Vector2.zero, t);
 
             if (t >= 1f)
-                stateMachine.ChangeToState("Engage");
+                stateMachine.ChangeToState(enemy.EngageStateName);
         }
     }
 

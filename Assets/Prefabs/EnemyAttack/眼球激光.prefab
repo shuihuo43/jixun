@@ -1,0 +1,114 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!1 &3299183316843525011
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 4908333379651320750}
+  - component: {fileID: 7534077207420488484}
+  m_Layer: 0
+  m_Name: ShapArea
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &4908333379651320750
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 3299183316843525011}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 2128616202336795745}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &7534077207420488484
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 3299183316843525011}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: d97e3f07782c52d47a199266dd9cb397, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  shapeType: 1
+  angle: 90
+  radius: 12
+  width: 58.91
+  height: 1
+  centerOffset: {x: 0, y: 0}
+  direction: 90
+  quality: 30
+  gizmoColor: {r: 1, g: 0, b: 0, a: 0.5}
+--- !u!1 &6352640481388983649
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 2128616202336795745}
+  - component: {fileID: 7724729082740834262}
+  m_Layer: 0
+  m_Name: "\u773C\u7403\u6FC0\u5149"
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &2128616202336795745
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 6352640481388983649}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children:
+  - {fileID: 4908333379651320750}
+  m_Father: {fileID: 0}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &7724729082740834262
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 6352640481388983649}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 34a4db717e494e440bf6d4a9293af1e2, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  damageResource: {fileID: 0}
+  animator: {fileID: 0}
+  bornClip: {fileID: 8300000, guid: def63e6fae4ab1d46989370b42137615, type: 3}
+  bornVolume: 0.6
+  entityPrefab: {fileID: 0}
+  isDebug: 0
+  directionOffset: -90
+  windupDuration: 0.5
+  shapeArea: {fileID: 7534077207420488484}
+  outerMaterial: {fileID: 2100000, guid: 11fb69f974205f2439dc9f2ebb045c4d, type: 2}
+  outerColor: {r: 1, g: 1, b: 1, a: 1}
+  innerMaterial: {fileID: 2100000, guid: f34fac0a899284e4f81c888b579f4495, type: 2}
+  innerStartColor: {r: 0, g: 1, b: 0, a: 1}
+  innerEndColor: {r: 1, g: 0, b: 0, a: 1}

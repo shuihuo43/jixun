@@ -10,7 +10,7 @@ GameObject:
   m_Component:
   - component: {fileID: 3450747237775159611}
   - component: {fileID: 3141912943233375943}
-  m_Layer: 0
+  m_Layer: 12
   m_Name: Sprite
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -72,7 +72,7 @@ SpriteRenderer:
   m_LightmapParameters: {fileID: 0}
   m_SortingLayerID: 0
   m_SortingLayer: 0
-  m_SortingOrder: 210
+  m_SortingOrder: 211
   m_Sprite: {fileID: 21300000, guid: 89f65c4fe20d901418ebc509721fb55f, type: 3}
   m_Color: {r: 1, g: 1, b: 1, a: 1}
   m_FlipX: 0
@@ -94,7 +94,7 @@ GameObject:
   m_Component:
   - component: {fileID: 7088805213675643901}
   - component: {fileID: 3967605758297020503}
-  m_Layer: 0
+  m_Layer: 12
   m_Name: Trail
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -157,7 +157,7 @@ TrailRenderer:
   m_LightmapParameters: {fileID: 0}
   m_SortingLayerID: 0
   m_SortingLayer: 0
-  m_SortingOrder: 200
+  m_SortingOrder: 210
   m_Time: 0.6
   m_PreviewTimeScale: 1
   m_Parameters:
@@ -239,7 +239,8 @@ GameObject:
   m_Component:
   - component: {fileID: 2502427355619760378}
   - component: {fileID: 3944828005021428361}
-  m_Layer: 0
+  - component: {fileID: -4264198425418916823}
+  m_Layer: 12
   m_Name: "\u51A4\u9B42"
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -275,7 +276,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 2fbe9f1be52b92f41be7a0742ab75197, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  damageResource: {fileID: 0}
+  damageResource: {fileID: 11400000, guid: 431978efdb451df489d421cc852623f5, type: 2}
   bornClip: {fileID: 8300000, guid: 79a7058cc2cb0a64a94c78d380adc2bf, type: 3}
   bornVolume: 0.5
   speed: 50
@@ -283,3 +284,38 @@ MonoBehaviour:
   homingRange: 20
   turnRate: 2
   lifetime: 3
+--- !u!58 &-4264198425418916823
+CircleCollider2D:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 7739256673652571994}
+  m_Enabled: 1
+  m_Density: 1
+  m_Material: {fileID: 6200000, guid: 6123798e5780c664bb94e68b26e8da41, type: 2}
+  m_IncludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_ExcludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_LayerOverridePriority: 0
+  m_ForceSendLayers:
+    serializedVersion: 2
+    m_Bits: 4294967295
+  m_ForceReceiveLayers:
+    serializedVersion: 2
+    m_Bits: 4294967295
+  m_ContactCaptureLayers:
+    serializedVersion: 2
+    m_Bits: 4294967295
+  m_CallbackLayers:
+    serializedVersion: 2
+    m_Bits: 4294967295
+  m_IsTrigger: 1
+  m_UsedByEffector: 0
+  m_UsedByComposite: 0
+  m_Offset: {x: 0, y: 0}
+  serializedVersion: 2
+  m_Radius: 0.5

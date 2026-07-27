@@ -4,15 +4,27 @@ public class E_Attack : EnemyState
 {
     public GameObject attackPrefab;
     public float windup = 0.25f;
+    [SerializeField] private float predictionTime = 0.3f;
 
     private float timer;
     private bool fired;
+    private Vector2 aimDir;
 
     public override void StateEnter()
     {
         timer = windup;
         fired = false;
         enemy.moveDir = Vector2.zero;
+
+        // 预判瞄准
+        Vector3 predicted = enemy.Player.position;
+        var p = enemy.Player.GetComponent<Player>();
+        if (p != null && p.MoveInput.sqrMagnitude > 0.01f)
+            predicted += (Vector3)(p.MoveInput * p.MoveSpeed * predictionTime);
+        aimDir = (predicted - enemy.transform.position).normalized;
+
+        // 前摇期间转向预判方向
+        enemy.faceDir = aimDir;
     }
 
     public override void StateUpdate()
@@ -36,7 +48,7 @@ public class E_Attack : EnemyState
         SectorRange range = obj.GetComponent<SectorRange>();
         if (range)
         {
-            range.EntityBorn(Vector2.zero, enemy.faceDir, enemy.gameObject, onDestroy: OnAttackEnd);
+            range.EntityBorn(Vector2.zero, aimDir, enemy.gameObject, onDestroy: OnAttackEnd);
             return;
         }
 
@@ -45,6 +57,6 @@ public class E_Attack : EnemyState
 
     protected virtual void OnAttackEnd()
     {
-        stateMachine.ChangeToState("Engage");
+        stateMachine.ChangeToState(enemy.EngageStateName);
     }
 }

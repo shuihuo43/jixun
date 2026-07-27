@@ -9,7 +9,7 @@ public class ShapeArea : MonoBehaviour
 
     [Header("扇形")]
     [SerializeField, Range(1f, 360f)] private float angle = 90f;
-    [SerializeField, Range(0.1f, 20f)]  private float radius = 3f;
+    [SerializeField, Range(0.1f, 500f)]  private float radius = 3f;
 
     [Header("矩形")]
     [SerializeField] private float width = 2f;

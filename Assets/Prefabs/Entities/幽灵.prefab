@@ -73,7 +73,7 @@ TrailRenderer:
   m_LightmapParameters: {fileID: 0}
   m_SortingLayerID: 0
   m_SortingLayer: 0
-  m_SortingOrder: 200
+  m_SortingOrder: 210
   m_Time: 0.3
   m_PreviewTimeScale: 1
   m_Parameters:
@@ -191,7 +191,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 37bf330c5bbec3a498559c1a98d7ed9f, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  damageResource: {fileID: 11400000, guid: 318803aa2aaceb54b9ea07e2022cd5f5, type: 2}
+  damageResource: {fileID: 11400000, guid: 2295129895cfd4441a43d455aaef1423, type: 2}
   bornClip: {fileID: 8300000, guid: b60a9d4d155d73248a3e7eeadcca4818, type: 3}
   bornVolume: 0.5
   speed: 12

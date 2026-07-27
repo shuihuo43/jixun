@@ -35,17 +35,16 @@ public class RoomSpawner : MonoBehaviour
     private List<GameObject> aliveEnemies = new List<GameObject>();
 
 
+    void Start()
+    {
+        StartRoom();
+    }
+
     public void StartRoom()
     {
-        if (started)
-            return;
-
-
+        if (started) return;
         started = true;
-
-
         StartCoroutine(SpawnWaves());
-
     }
 
 
@@ -103,28 +102,18 @@ public class RoomSpawner : MonoBehaviour
 
     void SpawnEnemy()
     {
+        if (enemyPrefabs == null || enemyPrefabs.Length == 0) return;
+        if (spawnPoints == null || spawnPoints.Length == 0) return;
 
-        GameObject enemy =
-            Instantiate(
-                enemyPrefabs[
-                    Random.Range(
-                        0,
-                        enemyPrefabs.Length
-                    )
-                ],
-                GetRandomSpawnPoint(),
-                Quaternion.identity
-            );
+        var prefab = enemyPrefabs[Random.Range(0, enemyPrefabs.Length)];
+        if (prefab == null) return;
 
-
+        GameObject enemy = Instantiate(prefab, GetRandomSpawnPoint(), Quaternion.identity);
         aliveEnemies.Add(enemy);
 
-
-        //// 兼容旧 Enemy 和新 EnemyBrain 两种敌人系统
-        //Enemy enemyScript = enemy.GetComponent<Enemy>();
-        //if (enemyScript != null)
-        //    enemyScript.OnDeath += RemoveEnemy;
-
+        var e = enemy.GetComponent<Enemy>();
+        if (e != null && e.resource != null)
+            e.resource.OnDeath += () => aliveEnemies.Remove(enemy);
     }
 
 
@@ -164,7 +153,7 @@ public class RoomSpawner : MonoBehaviour
         //墙保持存在
 
 
-        exitPortal.OpenPortal();
+        if (exitPortal != null) exitPortal.OpenPortal();
 
     }
 

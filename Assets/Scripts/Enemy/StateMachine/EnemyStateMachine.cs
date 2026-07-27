@@ -24,7 +24,11 @@ public class EnemyStateMachine : MonoBehaviour
         }
 
         if (initState != null)
+        {
+            Debug.Log($"[StateMachine] Switching to init: {initState.StateName}");
             ChangeToState(initState.StateName);
+            Debug.Log($"[StateMachine] Current state after init: {CurrentStateName}");
+        }
     }
 
     void Update()

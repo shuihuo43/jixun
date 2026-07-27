@@ -7,9 +7,6 @@ public class EnemyAttackEntity : Entity
         Poison_01 = 0,
     }
 
-    [Header("组件")]
-    [SerializeField] private Animator animator;
-
     [Header("检测")]
     [SerializeField] private ShapeArea shapeArea;
     [SerializeField] private string targetTag = "Player";

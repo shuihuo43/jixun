@@ -2,8 +2,6 @@ using UnityEngine;
 
 public class AttackEntity : Entity
 {
-    [SerializeField] private Animator animator;
-
     public void AttackBorn(
         WeaponResource weaponResource,
         Vector2 position,
@@ -15,7 +13,7 @@ public class AttackEntity : Entity
     {
         EntityBorn(position, direction, bornRoot, scale, flipY);
 
-        if (animator != null && weaponResource != null)
+        if (animator != null && weaponResource != null) // base.animator
         {
             animator.SetInteger("AttackIndex", (int)weaponResource.AttackType);
             animator.SetBool("IsDash", isDash);

@@ -24,6 +24,10 @@ public class Enemy : MonoBehaviour
     public float knockbackForce = 5f;
     public float knockbackAngleOffset = 15f;
 
+    /// <summary>墙壁检测距离</summary>
+    [SerializeField] private float wallDetectRange = 1.5f;
+    /// <summary>墙壁避让力度</summary>
+    [SerializeField] private float wallAvoidWeight = 3f;
 
     [Header("索敌")]
     public float detectionRadius = 8f;
@@ -44,6 +48,13 @@ public class Enemy : MonoBehaviour
     public bool IsPlayerDetected { get; private set; }
 
     public Transform Player { get; private set; }
+
+    /// <summary>交战状态名（子类可重写，如 Boss 用 Follow）</summary>
+    public virtual string EngageStateName => "Engage";
+    /// <summary>是否进入受击状态（Boss 重写为 false）</summary>
+    public virtual bool UseHurtState => true;
+    /// <summary>最后一次受击是否为玩家攻击</summary>
+    public bool LastHitFromPlayer { get; private set; }
 
 
     [HideInInspector]
@@ -119,6 +130,20 @@ public class Enemy : MonoBehaviour
             if (IsPlayerDetected)
                 OnPlayerDetected();
         }
+
+        ApplyWallAvoidance();
+    }
+
+    void ApplyWallAvoidance()
+    {
+        if (moveDir.sqrMagnitude < 0.01f) return;
+
+        var hit = Physics2D.Raycast(transform.position, moveDir, wallDetectRange, LayerMask.GetMask("Wall"));
+        if (hit.collider == null) return;
+
+        float t = 1f - (hit.distance / wallDetectRange); // 越近权重越高
+        Vector2 away = hit.normal * (t * wallAvoidWeight);
+        moveDir = (moveDir + away).normalized;
     }
 
 
@@ -299,8 +324,13 @@ public class Enemy : MonoBehaviour
         hitRecords[key] = Time.time + 0.05f;
 
         Entity source = other.GetComponent<Entity>();
+        LastHitFromPlayer = isPlayerAtk;
         float dmg = source?.damageResource != null ? source.damageResource.baseDamageValue : 1f;
         TakeDamage(dmg);
+
+        var debuffs = source?.damageResource?.GetDebuffDict();
+        Debug.Log($"[Debuff] source={source}, dmgRes={source?.damageResource}, debuffs={debuffs?.Count ?? 0}");
+        resource?.ApplyDebuffs(debuffs);
 
         if (source?.owner != null)
         {
@@ -322,6 +352,6 @@ public class Enemy : MonoBehaviour
             rb.velocity = away * knockbackForce;
         }
 
-        stateMachine.ChangeToState("Hurt");
+        if (UseHurtState) stateMachine.ChangeToState("Hurt");
     }
 }

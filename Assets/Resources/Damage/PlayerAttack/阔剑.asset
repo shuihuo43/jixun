@@ -12,4 +12,5 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 4de4618ad91d7bf49bc7be3acf3fe2f9, type: 3}
   m_Name: "\u9614\u5251"
   m_EditorClassIdentifier: 
-  baseDamageValue: 1
+  baseDamageValue: 8
+  debuffList: []

@@ -8,6 +8,9 @@ public class Entity : MonoBehaviour
 {
     public DamageResource damageResource;
 
+    [Header("动画")]
+    [SerializeField] protected Animator animator;
+
     [Header("音效")]
     [SerializeField] protected AudioClip bornClip;
     [SerializeField] protected float bornVolume = 0.8f;
@@ -49,6 +52,12 @@ public class Entity : MonoBehaviour
 
         if (bornClip != null)
             AudioManager.Instance?.PlaySFX(bornClip, bornVolume);
+
+        if (animator != null)
+        {
+            foreach (var p in animator.parameters)
+                if (p.name == "Born") { animator.SetTrigger("Born"); break; }
+        }
     }
 
     public virtual void EntityDestroy()
