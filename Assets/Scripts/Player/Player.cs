@@ -8,9 +8,19 @@ public class Player : MonoBehaviour
 
     [Header("组件 & 资源")]
     [SerializeField] private PlayerResource playerResource;
-    [SerializeField] private WeaponResource curWeapon;
+    public WeaponResource[] WeaponResources => playerResource?.WeaponResources;
+    internal int atkWeaponIdx;
+    internal int atkHitCount;
+    internal int atkFlipCount;
+    internal float atkCooldownTimer;
+    internal float weaponTurnDuration;
+    internal float weaponSlotTimer; // UI fill = slotTimer / slotCd
+    internal float itemTurnStart;
+    internal float itemTurnDuration;
+    internal int itemSlotIdx;
     [SerializeField] private Collider2D hurtCollider;
     [SerializeField] internal Transform rotateRoot;
+    [SerializeField] internal Transform flipRoot;
     internal PlayerResource PlayerResource => playerResource;
     internal Collider2D HurtCollider => hurtCollider;
 
@@ -20,6 +30,7 @@ public class Player : MonoBehaviour
     [SerializeField] private float dashSpeed = 35f;
     [SerializeField] private float dashDuration = 0.2f;
     [SerializeField] private float dashCooldown = 0.3f;
+    [SerializeField] internal AnimationCurve dashSpeedCurve = AnimationCurve.EaseInOut(0f, 1f, 1f, 0.3f);
     [Range(0f, 1f)] [SerializeField] private float dashEndSpeedRetention = 0.5f;
     [SerializeField] private float dashEndDecelerationTime = 0.1f;
     [SerializeField] private float accelerationTime = 0.05f;
@@ -27,8 +38,11 @@ public class Player : MonoBehaviour
 
     [Header("冲刺攻击")]
     [SerializeField] internal GameObject dashAttackEntityPrefab;
+    [SerializeField] internal DamageResource dashAttackDamageResource;
     [SerializeField] internal float dashAttackSpeed = 25f;
     [SerializeField] internal float dashAttackDuration = 0.15f;
+    [SerializeField] internal float dashAttackCooldown = 0.5f;
+    internal float dashAttackCooldownTimer;
 
     [Header("攻击 & 实体")]
     [SerializeField] internal GameObject entityRoot;
@@ -39,24 +53,26 @@ public class Player : MonoBehaviour
     [SerializeField] private float slowMoveSpeed = 3f;
     [SerializeField] private int attackCount = 0;
     [SerializeField] private bool whenAttackMove = true;
-    [SerializeField] private bool whenAttackRun = true;
+    [SerializeField] internal bool recallBladesOnDash;
+    [SerializeField] internal float recallBladeSpeed = 128f;
 
     [Header("奔跑相关")]
-    [SerializeField] internal GameObject[] runSpawnPrefabs;
     [SerializeField] internal float runSpawnInterval = 1f;
 
     [Header("生命值")]
     [SerializeField] private float maxHealth = 100f;
     [SerializeField] private float currentHealth = 100f;
 
-    internal float runSpawnTimer;
-    internal int runSpawnIndex;
+    // 虚血：回血上限，受击时 = maxHealth，差值可恢复
+    internal float pendingBloodMax;
+    internal float pendingBloodTimer;
+    private PlayerStatus playerStatus;
 
     #endregion
 
     #region 公共属性（状态机读取）
 
-    public Vector2 MoveInput { get; private set; }
+    public Vector2 MoveInput { get; internal set; }
     public Vector2 PreMovementNotZero { get; private set; } = Vector2.right;
     public float MoveSpeed => moveSpeed;
     public float RunSpeed => runSpeed;
@@ -66,12 +82,9 @@ public class Player : MonoBehaviour
     public bool IsRunning { get; set; }
     public bool IsAttacking { get; set; }
     public bool IsSlowMove { get; set; }
-    public WeaponResource CurWeapon => curWeapon;
-    public float AttackDuration => curWeapon != null ? curWeapon.TotalDuration : attackDuration;
-    public float AttackBaseDuration => curWeapon != null ? curWeapon.AttackDuration : attackDuration;
+    public WeaponResource CurWeapon => WeaponResources is { Length: > 0 } ? WeaponResources[0] : null;
     public float SlowMoveSpeed => slowMoveSpeed;
     public bool WhenAttackMove => whenAttackMove;
-    public bool WhenAttackRun => whenAttackRun;
 
     // 生命值属性（外部UI/Enemy使用）
     public float MaxHealth => maxHealth;
@@ -92,11 +105,47 @@ public class Player : MonoBehaviour
     [SerializeField] internal AudioClip dashClip;
     [SerializeField] internal float dashVolume = 0.8f;
 
+    [Header("受击")]
+    [SerializeField] private SpriteRenderer hurtSprite;
+    private float hurtFadeTimer;
+
     internal bool canBeHurt = true;
-    internal float dashAttackBuffer;
     public int combo;
     public float comboTime { get; set; }
     public float comboMaxTime = 2f;
+    public int comboStage; // 第几段连击（每 threshold 次 +1）
+
+    public void AddCombo()
+    {
+        combo++;
+        comboTime = comboMaxTime;
+        OnComboHit?.Invoke();
+
+        int threshold = playerResource != null ? playerResource.comboThreshold : 10;
+
+        if (combo % threshold == 0)
+        {
+            comboStage++;
+            if (playerResource?.comboEntities != null)
+            {
+                Vector2 dir = PreMovementNotZero;
+                foreach (var prefab in playerResource.comboEntities)
+                {
+                    if (prefab == null) continue;
+                    var obj = Instantiate(prefab, transform.position, Quaternion.identity);
+                    var entity = obj.GetComponent<Entity>();
+                    if (entity != null)
+                        entity.EntityBorn(transform.position, dir, entityRoot ?? gameObject, ownerObj: gameObject);
+                }
+            }
+        }
+
+        if (combo % threshold == 0)
+            OnComboTrigger?.Invoke();
+    }
+
+    public event Action OnComboHit;     // 每次攻击命中
+    public event Action OnComboTrigger; // 每 threshold 次触发
 
     public CameraController cameraController;
 
@@ -157,13 +206,6 @@ public class Player : MonoBehaviour
 
         switch (bufferedInput)
         {
-            case BufferedInput.Attack:
-                if (!IsAttacking && !IsDashing)
-                {
-                    bufferedInput = BufferedInput.None;
-                    ExecuteAttack();
-                }
-                break;
             case BufferedInput.Dash:
                 if (canDash && !IsDashing)
                 {
@@ -214,6 +256,8 @@ public class Player : MonoBehaviour
         if (camObj != null)
             cameraController = camObj.GetComponent<CameraController>();
 
+        playerStatus = FindObjectOfType<PlayerStatus>();
+
         // 运行时拷贝资源，不污染原 ScriptableObject
         if (playerResource != null)
         {
@@ -239,6 +283,10 @@ public class Player : MonoBehaviour
         if (MoveInput != Vector2.zero)
             PreMovementNotZero = MoveInput;
 
+        // 身体水平翻转
+        if (flipRoot != null)
+            UpdateFlip();
+
         // 3. 冲刺冷却计时
         if (!canDash)
         {
@@ -247,14 +295,23 @@ public class Player : MonoBehaviour
                 canDash = true;
         }
 
+        // 冲刺攻击冷却
+        if (dashAttackCooldownTimer > 0f)
+            dashAttackCooldownTimer -= Time.deltaTime;
+
         // 4. 冲刺（优先级最高，可打断攻击和冲刺攻击）
         if (Input.GetKeyDown(KeyCode.Space))
         {
-            // 冲刺攻击中按空格 → 切回冲刺（查能量，不查冷却）
-            if (movementSM.CurrentStateName == "DashAttack")
+            // 攻击/冲刺攻击中按空格 → 直接冲刺（查能量，不查冷却）
+            if (IsAttacking || movementSM.CurrentStateName == "DashAttack")
             {
                 if (playerResource == null || ConsumeEnergy(playerResource.dashCost))
+                {
+                    actionSM.ChangeToState("None");
+                    canDash = false;
+                    dashCooldownTimer = dashCooldown;
                     movementSM.ChangeToState("Dash");
+                }
                 return;
             }
 
@@ -267,27 +324,34 @@ public class Player : MonoBehaviour
                 SetBuffer(BufferedInput.Dash);
         }
 
-        // 5. 冲刺攻击（冲刺中 或 缓冲期内）
-        dashAttackBuffer -= Time.deltaTime;
-        if (Input.GetMouseButtonDown(0) && (IsDashing || dashAttackBuffer > 0f))
+        // 5. 冲刺中按攻击 → 打断冲刺进入攻击
+        if (IsDashing && Input.GetMouseButtonDown(0))
         {
-            movementSM.ChangeToState("DashAttack");
+            actionSM.ChangeToState("None");
+            ExecuteAttack();
             return;
         }
 
-        // 6. 预输入：攻击
-        if (Input.GetMouseButtonDown(0))
+        // 6. 攻击
+        string curMove = movementSM.CurrentStateName;
+        if (!IsAttacking && curMove != "DashAttack")
         {
-            if (!IsAttacking && !IsDashing)
+            // 冲刺攻击（仅奔跑中） — 暂时注释
+            //if (curMove == "Run" && Input.GetMouseButtonDown(0))
+            //{
+            //    if (dashAttackCooldownTimer <= 0f && (playerResource == null || ConsumeEnergy(playerResource.dashCost)))
+            //        movementSM.ChangeToState("DashAttack");
+            //}
+            if (Input.GetMouseButton(0))
+            {
                 ExecuteAttack();
-            else
-                SetBuffer(BufferedInput.Attack);
+            }
         }
 
-        // 7. 处理预输入缓冲
+        // 6. 处理预输入缓冲
         ProcessBuffer();
 
-        // 8. 委托双状态机处理
+        // 7. 委托双状态机处理
         movementSM.StateUpdate();
         actionSM.StateUpdate();
 
@@ -295,10 +359,13 @@ public class Player : MonoBehaviour
         if (combo > 0)
         {
             comboTime -= Time.deltaTime;
-            if (comboTime <= 0f) combo = 0;
+            if (comboTime <= 0f) { combo = 0; comboStage = 0; }
         }
 
-        // 9. 精力恢复
+        // 9. 攻击冷却计时
+        if (atkCooldownTimer > 0f) atkCooldownTimer -= Time.deltaTime;
+
+        // 10. 精力恢复
         if (playerResource != null && CurrentEnergy < playerResource.maxEnergy)
         {
             if (energyRecoveryTimer > 0f)
@@ -308,12 +375,32 @@ public class Player : MonoBehaviour
             else
             {
                 float prev = CurrentEnergy;
-                CurrentEnergy += playerResource.recoverySpeed * Time.deltaTime;
+                CurrentEnergy += playerResource.maxEnergy * playerResource.recoverySpeed * Time.deltaTime;
                 if (CurrentEnergy > playerResource.maxEnergy)
                     CurrentEnergy = playerResource.maxEnergy;
                 if (CurrentEnergy != prev)
                     OnEnergyChanged?.Invoke();
             }
+        }
+
+        // 受击闪烁渐隐
+        if (hurtFadeTimer > 0f && hurtSprite != null)
+        {
+            hurtFadeTimer -= Time.deltaTime;
+            float t = hurtFadeTimer / 0.15f;
+            var c = hurtSprite.color;
+            c.a = Mathf.Lerp(0f, 0.3f, t);
+            hurtSprite.color = c;
+            if (hurtFadeTimer <= 0f)
+                hurtSprite.enabled = false;
+        }
+
+        // 虚血超时：同步为当前血量
+        if (pendingBloodTimer > 0f)
+        {
+            pendingBloodTimer -= Time.deltaTime;
+            if (pendingBloodTimer <= 0f)
+                pendingBloodMax = playerResource != null ? playerResource.currentHealth : currentHealth;
         }
     }
 
@@ -330,22 +417,25 @@ public class Player : MonoBehaviour
     {
         actionSM.ChangeToState("Attack");
 
-        // 攻击期间机动状态降级：Run→Move→SlowMove
-        string curMove = movementSM.CurrentStateName;
-        if (curMove == "Run")
-        {
-            if (!whenAttackRun)
-                movementSM.ChangeToState(whenAttackMove ? "Move" : "SlowMove");
-        }
-        else if (curMove == "Move")
-        {
-            if (!whenAttackMove)
-                movementSM.ChangeToState("SlowMove");
-        }
-        else
-        {
+        // 攻击期间机动状态：不能移动则切 SlowMove
+        if (!whenAttackMove)
             movementSM.ChangeToState("SlowMove");
-        }
+    }
+
+    /// <summary>当前武器槽索引和轮转进度（0~1）</summary>
+    public (int slot, float fill) GetWeaponProgress()
+    {
+        float slotCd = weaponTurnDuration > 0 ? weaponTurnDuration : 0.2f;
+        float fill = IsAttacking ? Mathf.Clamp01(weaponSlotTimer / slotCd) : 0f;
+        return (atkWeaponIdx % 5, fill);
+    }
+
+    /// <summary>当前物品槽索引和轮转进度（0~1）</summary>
+    public (int slot, float fill) GetItemProgress()
+    {
+        float elapsed = Time.time - itemTurnStart;
+        float fill = itemTurnDuration > 0 ? Mathf.Clamp01(1f - elapsed / itemTurnDuration) : 0f;
+        return (itemSlotIdx, fill);
     }
 
     /// <summary>执行冲刺</summary>
@@ -361,39 +451,55 @@ public class Player : MonoBehaviour
     }
 
 
-    // 攻击逻辑
     public void AttackLogic()
     {
-        if (entityPrefab == null || entityRoot == null || entitySpawnPoint == null)
-            return;
+        if (entityPrefab == null || entityRoot == null || entitySpawnPoint == null) return;
+        if (WeaponResources.Length == 0) return;
 
-        // 交替 flipY
-        attackCount++;
-        bool flipY = (attackCount % 2 == 1);
+        var weapon = WeaponResources.Length > 0 ? WeaponResources[atkWeaponIdx % WeaponResources.Length] : null;
+        if (weapon == null) return;
 
-        // 实例化实体
+        // 虚血恢复（需要 CanRecoverPendingBlood buff）
+        float recoverable = pendingBloodMax - playerResource.currentHealth;
+        bool canRecover = playerResource.HasBoolBuff(PlayerResource.BoolBuffType.CanRecoverPendingBlood);
+        if (canRecover && recoverable > 0f && weapon.AttackCount > 0)
+        {
+            float heal = recoverable * 0.5f / weapon.AttackCount;
+            playerResource.ChangeHealth(heal);
+        }
+
+        if (playerResource.healOnHit > 0 && weapon.AttackCount > 0)
+            playerResource.ChangeHealth(playerResource.healOnHit / weapon.AttackCount);
+
+        atkFlipCount++;
+        bool flipY = (atkFlipCount % 2 == 1);
+
         GameObject entityObj = Instantiate(entityPrefab);
 
-        // 获取鼠标方向向量，加上武器随机偏移角度
-        Vector3 mouseWorldPos = Camera.main.ScreenToWorldPoint(Input.mousePosition);
-        Vector2 baseDirection = (mouseWorldPos - entitySpawnPoint.position).normalized;
+        var locked = FindObjectOfType<MouseCursor>()?.lockedEnemy;
+        Vector2 baseDirection;
+        if (locked != null)
+            baseDirection = ((Vector2)locked.position - (Vector2)entitySpawnPoint.position).normalized;
+        else
+        {
+            Vector3 mouseWorldPos = Camera.main.ScreenToWorldPoint(Input.mousePosition);
+            baseDirection = (mouseWorldPos - entitySpawnPoint.position).normalized;
+        }
         float baseAngle = Mathf.Atan2(baseDirection.y, baseDirection.x) * Mathf.Rad2Deg;
-        float offsetRange = curWeapon != null ? curWeapon.AttackAngleOffset : 0f;
-        float randomAngle = baseAngle + UnityEngine.Random.Range(-offsetRange, offsetRange);
+        float randomAngle = baseAngle + UnityEngine.Random.Range(-weapon.AttackAngleOffset, weapon.AttackAngleOffset);
         float rad = randomAngle * Mathf.Deg2Rad;
-        Vector2 mouseDirection = new Vector2(Mathf.Cos(rad), Mathf.Sin(rad));
+        Vector2 dir = new Vector2(Mathf.Cos(rad), Mathf.Sin(rad));
 
-        // 计算 entityRoot 下的本地坐标
         Vector2 localPos = entityRoot.transform.InverseTransformPoint(entitySpawnPoint.position);
 
-        // 调用 AttackBorn 初始化
-        AttackEntity attackEntity = entityObj.GetComponent<AttackEntity>();
-        if (attackEntity != null)
+        AttackEntity atk = entityObj.GetComponent<AttackEntity>();
+        if (atk != null)
         {
-            attackEntity.AttackBorn(curWeapon, localPos, mouseDirection, entityRoot, new Vector2(attackScale, attackScale), flipY);
-            attackEntity.EntityBorn(localPos, mouseDirection, entityRoot, ownerObj: gameObject);
-            if (curWeapon != null)
-                attackEntity.damageResource = curWeapon.damageResource;
+            float s = playerResource != null ? playerResource.weaponScale : 0.6f;
+            var scale = new Vector2(s, s);
+            atk.damageResource = weapon.damageResource;
+            atk.AttackBorn(weapon, localPos, dir, entityRoot, scale, flipY);
+            atk.EntityBorn(localPos, dir, entityRoot, scale, flipY, null, gameObject);
         }
     }
 
@@ -459,6 +565,32 @@ public class Player : MonoBehaviour
 
     #endregion
 
+    #region 翻转
+
+    void UpdateFlip()
+    {
+        if (flipRoot == null) return;
+
+        Vector3 scale = flipRoot.localScale;
+        float playerX = transform.position.x;
+
+        // 优先使用索敌目标，否则用鼠标
+        var locked = FindObjectOfType<MouseCursor>()?.lockedEnemy;
+        float targetX;
+        if (locked != null)
+            targetX = locked.position.x;
+        else
+            targetX = Camera.main.ScreenToWorldPoint(Input.mousePosition).x;
+
+        float diff = targetX - playerX;
+        if (Mathf.Abs(diff) > 5f)
+            scale.x = diff > 0 ? Mathf.Abs(scale.x) : -Mathf.Abs(scale.x);
+
+        flipRoot.localScale = scale;
+    }
+
+    #endregion
+
     #region 生命值
 
     public void TakeDamage(float amount)
@@ -489,9 +621,24 @@ public class Player : MonoBehaviour
         if (!canBeHurt) return;
 
         float damage = source?.damageResource != null ? source.damageResource.baseDamageValue : 1f;
+
+        // 虚血：先结算上一次（同步到当前血量），再存本次受击前血量
+        float hpBeforeHit = playerResource != null ? playerResource.currentHealth : currentHealth;
         playerResource.ChangeHealth(-damage);
+        pendingBloodMax = hpBeforeHit;
+        pendingBloodTimer = 1f;
+
         AudioManager.Instance?.PlaySFX(hurtClip, hurtVolume);
-        cameraController?.Shake(12f, 8f, 0.2f);
+        cameraController?.Shake(2f, 8f, 0.2f);
+
+        if (hurtSprite != null)
+        {
+            hurtSprite.enabled = true;
+            var c = hurtSprite.color;
+            c.a = 0.3f;
+            hurtSprite.color = c;
+            hurtFadeTimer = 0.3f;
+        }
     }
 
     #endregion

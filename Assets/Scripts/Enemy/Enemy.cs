@@ -36,6 +36,8 @@ public class Enemy : MonoBehaviour
     [Header("攻击")]
     public ShapeArea attackShape;
     public float attackCooldown = 1f;
+    public GameObject attackAlertPrefab;
+    public Transform attackAlertSpawnPoint;
 
 
     public bool IsAttackColdDown { get; private set; }
@@ -71,7 +73,8 @@ public class Enemy : MonoBehaviour
 
     private readonly Dictionary<string, float> hitRecords = new();
 
-
+    private float bleedTickTimer;
+    private const float bleedTickInterval = 0.2f;
 
     void Awake()
     {
@@ -84,9 +87,20 @@ public class Enemy : MonoBehaviour
         {
             resource = Instantiate(resource);
             resource.currentHealth = resource.maxHealth;
+            resource.OnReap += () =>
+            {
+                ReleaseAllWraithMarks();
+            };
+
             resource.OnDeath += () =>
             {
-                Debug.Log("Enemy: OnDeath fired, switching to Death state");
+                // 击杀回血
+                var pr = Player?.GetComponent<Player>()?.PlayerResource;
+                if (pr != null && pr.healOnKill > 0)
+                    pr.ChangeHealth(pr.healOnKill);
+
+                ReleaseAllWraithMarks();
+                resource.statusDict[DebuffType.WraithMark] = 0;
                 stateMachine.ChangeToState("Death");
             };
         }
@@ -97,6 +111,7 @@ public class Enemy : MonoBehaviour
 
         if (obj != null)
             Player = obj.transform;
+
     }
 
 
@@ -105,6 +120,17 @@ public class Enemy : MonoBehaviour
     {
         if (stateMachine.CurrentStateName == "Death") return;
 
+        // 动态同步 PlayerResource 上限（支持词条变更）
+        var pr = Player?.GetComponent<Player>()?.PlayerResource;
+        if (resource != null && pr != null)
+        {
+            resource.bleedMaxStacks = pr.bleedMaxStacks;
+            resource.wraithMaxStacks = pr.wraithMaxStacks;
+            resource.bleedDuration = pr.bleedDuration;
+        }
+
+        UpdateBleedTick();
+        resource?.UpdateBleedExpiry(Time.deltaTime);
         UpdateAttackCooldown();
 
         UpdateRotation();
@@ -302,9 +328,67 @@ public class Enemy : MonoBehaviour
 
 
 
-    public void TakeDamage(float damage)
+    /// <summary>统一幽灵生成入口，数量受 PlayerResource.GhostSpawnCount 影响</summary>
+    void SpawnGhosts(int count)
     {
-        resource?.ChangeHealth(-damage);
+        var ghostPrefab = GameManager.Instance?.GetEntity("幽灵");
+        if (ghostPrefab == null) return;
+
+        var pr = Player?.GetComponent<Player>()?.PlayerResource;
+        int multiplier = pr != null ? pr.ghostSpawnCount : 1;
+        int total = count * multiplier;
+
+        var root = GameObject.FindGameObjectWithTag("EnemyAttackEntityRoot");
+        if (root == null) root = gameObject;
+
+        for (int i = 0; i < total; i++)
+        {
+            var obj = Instantiate(ghostPrefab, transform.position, Quaternion.identity);
+            var entity = obj.GetComponent<Entity>();
+            if (entity != null)
+                entity.EntityBorn(root.transform.InverseTransformPoint(transform.position), Random.insideUnitCircle.normalized, root);
+        }
+    }
+
+    void ReleaseAllWraithMarks()
+    {
+        if (resource == null) return;
+        if (!resource.statusDict.TryGetValue(DebuffType.WraithMark, out int mark) || mark <= 0) return;
+        SpawnGhosts(mark);
+    }
+
+    public void TakeDamage(float damage, DamageType damageType)
+    {
+        // 增伤计算
+        var pr = Player?.GetComponent<Player>()?.PlayerResource;
+        float bonus = pr?.damageBonuses?[damageType] ?? 1f;
+        float finalDmg = damage * bonus;
+
+        resource?.ChangeHealth(-finalDmg);
+
+        // 跳字位置：从敌人向远离玩家方向偏移
+        Vector2 spawnPos = transform.position;
+        var dnc = DamageNumberCanvas.Instance;
+        if (Player != null && dnc != null)
+        {
+            Vector2 awayDir = ((Vector2)transform.position - (Vector2)Player.position).normalized;
+            spawnPos += awayDir * dnc.OffsetDistance;
+        }
+        dnc?.Spawn(spawnPos, Mathf.RoundToInt(finalDmg), damageType);
+    }
+
+    void UpdateBleedTick()
+    {
+        if (resource == null) return;
+        if (!resource.statusDict.TryGetValue(DebuffType.Blood, out int stacks) || stacks <= 0) return;
+
+        bleedTickTimer += Time.deltaTime;
+        if (bleedTickTimer < bleedTickInterval) return;
+        bleedTickTimer -= bleedTickInterval;
+
+        var pr = Player?.GetComponent<Player>()?.PlayerResource;
+        float bleedDmg = pr != null ? pr.bleedDamage : 5f;
+        TakeDamage(stacks * bleedDmg, DamageType.Bleed);
     }
 
 
@@ -325,17 +409,27 @@ public class Enemy : MonoBehaviour
 
         Entity source = other.GetComponent<Entity>();
         LastHitFromPlayer = isPlayerAtk;
-        float dmg = source?.damageResource != null ? source.damageResource.baseDamageValue : 1f;
-        TakeDamage(dmg);
 
+        // 先结算收割/异常状态，再结算伤害，确保 Reap 在死亡前处理
         var debuffs = source?.damageResource?.GetDebuffDict();
         Debug.Log($"[Debuff] source={source}, dmgRes={source?.damageResource}, debuffs={debuffs?.Count ?? 0}");
         resource?.ApplyDebuffs(debuffs);
 
+        float dmg = source?.damageResource != null ? source.damageResource.baseDamageValue : 1f;
+        DamageType dtype = source?.damageResource != null ? source.damageResource.damageType : DamageType.Physics;
+        TakeDamage(dmg, dtype);
+
+        // 玩家攻击 + 有冤魂标记 → 生成幽灵并消耗一层
+        if (isPlayerAtk && resource != null && resource.statusDict.TryGetValue(DebuffType.WraithMark, out int mark) && mark > 0)
+        {
+            SpawnGhosts(1);
+            resource.statusDict[DebuffType.WraithMark] = mark - 1;
+        }
+
         if (source?.owner != null)
         {
             var p = source.owner.GetComponent<Player>();
-            if (p != null) { p.combo++; p.comboTime = p.comboMaxTime; }
+            if (p != null) { p.AddCombo(); }
         }
 
         AudioManager.Instance?.PlaySFX(hurtClip, hurtVolume);

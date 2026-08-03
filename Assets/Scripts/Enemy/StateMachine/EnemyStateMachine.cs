@@ -7,6 +7,8 @@ public class EnemyStateMachine : MonoBehaviour
     [SerializeField] private EnemyState[] stateList;
     [SerializeField] private EnemyState initState;
 
+    public bool active = true;
+
     private readonly Dictionary<string, EnemyState> states = new();
     private EnemyState currentState;
     private Enemy enemy;
@@ -43,6 +45,8 @@ public class EnemyStateMachine : MonoBehaviour
 
     public void ChangeToState(string name)
     {
+        if (!active) return;
+
         // 死了别再切状态
         if (CurrentStateName == "Death" && name != "Death")
         {

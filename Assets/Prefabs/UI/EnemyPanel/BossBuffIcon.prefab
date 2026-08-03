@@ -91,3 +91,5 @@ MonoBehaviour:
   entries:
   - type: 0
     sprite: {fileID: 21300000, guid: 89f65c4fe20d901418ebc509721fb55f, type: 3}
+  - type: 2
+    sprite: {fileID: 21300000, guid: d7e7d87fa06a84944830c9de58f94f9a, type: 3}

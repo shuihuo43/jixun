@@ -9,12 +9,23 @@ public class E_Attack : EnemyState
     private float timer;
     private bool fired;
     private Vector2 aimDir;
+    private GameObject alertInstance;
 
     public override void StateEnter()
     {
         timer = windup;
         fired = false;
         enemy.moveDir = Vector2.zero;
+        alertInstance = null;
+
+        // 攻击预警（挂在敌人下，跟随移动）
+        if (enemy.attackAlertPrefab != null)
+        {
+            alertInstance = Instantiate(enemy.attackAlertPrefab, enemy.transform);
+            alertInstance.transform.localPosition = enemy.attackAlertSpawnPoint != null
+                ? enemy.attackAlertSpawnPoint.localPosition
+                : Vector3.zero;
+        }
 
         // 预判瞄准
         Vector3 predicted = enemy.Player.position;
@@ -53,6 +64,12 @@ public class E_Attack : EnemyState
         }
 
         OnAttackEnd();
+    }
+
+    public override void StateExit()
+    {
+        if (alertInstance != null)
+            Destroy(alertInstance);
     }
 
     protected virtual void OnAttackEnd()

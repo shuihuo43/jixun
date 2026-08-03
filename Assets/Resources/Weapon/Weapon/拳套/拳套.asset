@@ -1,0 +1,21 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 4e24966ef732b5243b350fb04fc4e8c5, type: 3}
+  m_Name: "\u62F3\u5957"
+  m_EditorClassIdentifier: 
+  weaponName: "\u62F3\u5957"
+  description: "\u653B\u901F\u6781\u5FEB\u7684\u6B66\u5668"
+  icon: {fileID: 21300000, guid: 848136226a4dd764093ebc879fcc78c8, type: 3}
+  AttackCount: 4
+  AttackType: 5
+  AttackAngleOffset: 45
+  damageResource: {fileID: 11400000, guid: 9e4baffff4f996e4d97f1c6a0f5a808f, type: 2}

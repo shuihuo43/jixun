@@ -61,6 +61,7 @@ public class E_Hurt : EnemyState
     {
         if (hurtEffectPrefab == null || enemy.Player == null) return;
 
+        Vector2 spawnPos = enemy.transform.position;
         float baseAngle = Mathf.Atan2(knockDir.y, knockDir.x) * Mathf.Rad2Deg;
 
         GameObject root = GameObject.FindGameObjectWithTag("EnemyAttackEntityRoot");
@@ -73,12 +74,12 @@ public class E_Hurt : EnemyState
             float rad = angle * Mathf.Deg2Rad;
             Vector2 dir = new Vector2(Mathf.Cos(rad), Mathf.Sin(rad));
 
-            var obj = Instantiate(hurtEffectPrefab, enemy.transform.position, Quaternion.identity);
+            var obj = Instantiate(hurtEffectPrefab, spawnPos, Quaternion.identity);
             var entity = obj.GetComponent<Entity>();
             if (entity != null)
             {
-                Vector2 localPos = root.transform.InverseTransformPoint(enemy.transform.position);
-                entity.EntityBorn(localPos, dir, root);
+                //Vector2 localPos = root.transform.InverseTransformPoint(spawnPos);
+                entity.EntityBorn(enemy.gameObject.transform.position, dir, root);
             }
         }
     }

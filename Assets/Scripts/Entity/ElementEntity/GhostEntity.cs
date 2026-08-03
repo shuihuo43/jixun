@@ -1,6 +1,7 @@
 using UnityEngine;
 
-public class GhostEntity : Entity
+/// <summary>冤魂</summary>
+public class GhostEntity : ElementEntity
 {
     [Header("移动")]
     [SerializeField] private float speed = 8f;
@@ -10,12 +11,8 @@ public class GhostEntity : Entity
     [SerializeField] private float homingRange = 8f;
     [SerializeField] private float turnRate = 3f;
 
-    [Header("生命周期")]
-    [SerializeField] private float lifetime = 3f;
-
     private Transform target;
     private Vector2 velocity;
-    private float timer;
     private Vector2 moveDir;
 
     public override void EntityBorn(Vector2 pos, Vector2 dir, GameObject root, Vector2? scale = null, bool flipY = false, System.Action onDestroy = null, GameObject ownerObj = null)
@@ -24,9 +21,7 @@ public class GhostEntity : Entity
         transform.SetParent(root.transform, false);
         transform.localPosition = pos;
         transform.localRotation = Quaternion.identity;
-
-        if (bornClip != null)
-            AudioManager.Instance?.PlaySFX(bornClip, bornVolume);
+        if (bornClip != null) AudioManager.Instance?.PlaySFX(bornClip, bornVolume);
     }
 
     void Start()
@@ -36,40 +31,26 @@ public class GhostEntity : Entity
         velocity = new Vector2(Mathf.Cos(angle * Mathf.Deg2Rad), Mathf.Sin(angle * Mathf.Deg2Rad)) * speed;
     }
 
-    void Update()
+    protected override void Update()
     {
-        timer += Time.deltaTime;
-        if (timer >= lifetime) { EntityDestroy(); return; }
-
-        if (target == null || !IsAlive(target))
-            FindTarget();
-
+        base.Update();
+        if (target == null || !IsAlive(target)) FindTarget();
         if (target != null)
         {
             Vector2 toTarget = target.position - transform.position;
             float dist = toTarget.magnitude;
-
             if (dist < homingRange)
             {
-                // 叶绿弹式追踪：朝目标方向旋转当前速度向量
-                Vector2 desired = toTarget.normalized * speed;
+                Vector2 tangent = new Vector2(-toTarget.y, toTarget.x).normalized;
+                Vector2 desired = (toTarget.normalized + tangent * Random.Range(-0.4f, 0.4f)).normalized * speed;
                 velocity = Vector2.MoveTowards(velocity, desired, turnRate * Time.deltaTime * speed);
             }
-            else
-            {
-                // 距离外重新找
-                target = null;
-            }
+            else target = null;
         }
-
         transform.Translate(velocity * Time.deltaTime, Space.World);
     }
 
-    bool IsAlive(Transform t)
-    {
-        var en = t.GetComponent<Enemy>();
-        return en != null && en.resource != null && en.resource.currentHealth > 0f;
-    }
+    bool IsAlive(Transform t) { var e = t.GetComponent<Enemy>(); return e != null && e.resource != null && e.resource.currentHealth > 0f; }
 
     void FindTarget()
     {
@@ -78,13 +59,8 @@ public class GhostEntity : Entity
         foreach (var e in enemies)
         {
             if (!IsAlive(e.transform)) continue;
-
             float d = Vector2.Distance(transform.position, e.transform.position);
-            if (d < nearest)
-            {
-                nearest = d;
-                target = e.transform;
-            }
+            if (d < nearest) { nearest = d; target = e.transform; }
         }
     }
 }

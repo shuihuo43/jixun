@@ -153,7 +153,7 @@ public class RoomSpawner : MonoBehaviour
         //墙保持存在
 
 
-        if (exitPortal != null) exitPortal.OpenPortal();
+        // room complete
 
     }
 

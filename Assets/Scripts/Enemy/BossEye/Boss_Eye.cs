@@ -12,6 +12,9 @@ public class Boss_Eye : Enemy
     /// <summary>连续冲刺计数</summary>
     [HideInInspector] public int dashCount;
 
+    [Header("触发")]
+    [SerializeField] public Collider2D triggerCollider;
+
     [Header("召唤")]
     [SerializeField] public GameObject summonWarningPrefab;
     [SerializeField] public GameObject summonEnemyPrefab;
@@ -25,7 +28,19 @@ public class Boss_Eye : Enemy
     void Start()
     {
         if (resource != null)
+        {
             resource.OnHealthChanged += OnDamaged;
+            resource.OnDeath += KillAllMinions;
+        }
+    }
+
+    void KillAllMinions()
+    {
+        foreach (var m in FindObjectsOfType<EyeMinion>())
+        {
+            if (m.eyeBoss == this && m.resource != null && m.resource.currentHealth > 0f)
+                m.resource.ChangeHealth(-9999f);
+        }
     }
 
     void OnDamaged()

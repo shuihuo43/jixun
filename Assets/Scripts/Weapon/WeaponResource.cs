@@ -1,26 +1,23 @@
-using System.Collections;
-using System.Collections.Generic;
 using UnityEngine;
-
-
 
 [CreateAssetMenu(fileName = "WeaponResource", menuName = "Resource/WeaponResource")]
 public class WeaponResource : ScriptableObject
 {
     public enum ActionType
     {
-        Swing = 0,
-        Thrust = 1,
+        Claymore = 0, //kuo jian
+        Scythe = 1, //lian dao
+        Tow_knives = 2, //shuang dao
+        Spear = 3, //chang qiang
+        Scimitar = 4, //qu jian
+        Handgun = 5, //quan tao
     }
 
-    [SerializeField] public int AttackCount = 1;
-    [SerializeField] public ActionType AttackType = ActionType.Swing;
-    [SerializeField] public float AttackDuration = 0.3f;
-    [SerializeField] public float AttackRecovery = 0.1f;
-    [SerializeField] public float AttackAngleOffset = 0f;
+    public string weaponName;
+    [TextArea] public string description;
+    public Sprite icon;
+    public int AttackCount = 1;
+    public ActionType AttackType = ActionType.Claymore;
+    public float AttackAngleOffset = 0f;
     public DamageResource damageResource;
-
-    /// <summary>攻击总时长（含后摇）</summary>
-    public float TotalDuration => AttackDuration + AttackRecovery;
-
 }

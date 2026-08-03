@@ -43,15 +43,15 @@ public class AudioManager : MonoBehaviour
     public float GetMusicVolume()   { mixer.GetFloat("MusicVolume", out float v); return FromDB(v); }
 
     private Dictionary<AudioClip, int> activeCount = new();
-    private const float DuplicateVolumeFalloff = 0.5f;
 
     public void PlaySFX(AudioClip clip, float volume = 1f)
     {
         if (clip == null) return;
 
         activeCount.TryGetValue(clip, out int c);
-        if (c > 0) volume *= DuplicateVolumeFalloff;
-        activeCount[clip] = c + 1;
+        c++;
+        activeCount[clip] = c;
+        volume /= c; // 叠放均分音量
 
         sfxSource.pitch = Random.Range(0.95f, 1.05f);
         sfxSource.PlayOneShot(clip, volume);

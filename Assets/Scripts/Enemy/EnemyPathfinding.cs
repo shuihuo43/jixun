@@ -43,15 +43,15 @@ public class EnemyPathfinding : MonoBehaviour
         Debug.Log($"Pathfinding: baked={baked}, blocked cells={blocked.Count}");
     }
 
-    public Vector2 CellToWorld(Vector3Int c) => tilemap.GetCellCenterWorld(c);
+    public Vector2 CellToWorld(Vector3Int c) => tilemap != null ? tilemap.GetCellCenterWorld(c) : Vector2.zero;
 
-    Vector3Int W2C(Vector2 p) => tilemap.WorldToCell(p);
+    Vector3Int W2C(Vector2 p) => tilemap != null ? tilemap.WorldToCell(p) : Vector3Int.zero;
 
     bool Walkable(Vector3Int c) => !blocked.Contains(c);
 
     public List<Vector3Int> FindPath(Vector2 from, Vector2 to)
     {
-        if (!baked) return null;
+        if (!baked || tilemap == null) return null;
 
         var start = W2C(from);
         var end   = W2C(to);

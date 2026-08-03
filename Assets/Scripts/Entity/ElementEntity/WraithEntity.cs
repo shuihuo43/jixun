@@ -1,6 +1,6 @@
 using UnityEngine;
 
-public class WraithEntity : Entity
+public class WraithEntity : ElementEntity
 {
     [Header("移动")]
     [SerializeField] private float speed = 6f;
@@ -10,12 +10,8 @@ public class WraithEntity : Entity
     [SerializeField] private float searchRange = 10f;
     [SerializeField] private float turnRate = 2f;
 
-    [Header("生命周期")]
-    [SerializeField] private float lifetime = 4f;
-
     private Transform target;
     private Vector2 velocity;
-    private float timer;
     private float switchTimer;
     private Vector2 moveDir;
 
@@ -38,10 +34,9 @@ public class WraithEntity : Entity
         PickRandomTarget();
     }
 
-    void Update()
+    protected override void Update()
     {
-        timer += Time.deltaTime;
-        if (timer >= lifetime) { EntityDestroy(); return; }
+        base.Update();
 
         if (target == null || !IsAlive(target))
             PickRandomTarget();
@@ -80,5 +75,39 @@ public class WraithEntity : Entity
         }
 
         target = inRange.Count > 0 ? inRange[Random.Range(0, inRange.Count)] : null;
+    }
+
+    void OnTriggerEnter2D(Collider2D other)
+    {
+        if (!other.CompareTag("Enemy")) return;
+        if (age < 0.1f) return;
+
+        var enemy = other.GetComponent<Enemy>();
+        var pr = GameManager.Instance?.player?.PlayerResource;
+        if (pr != null && pr.HasBoolBuff(PlayerResource.BoolBuffType.GhostSpawnWraithOnMark))
+        {
+            if (enemy?.resource != null && enemy.resource.statusDict.TryGetValue(DebuffType.Blood, out int blood) && blood > 0)
+            {
+                enemy.resource.statusDict[DebuffType.Blood] = blood - 1;
+                var prefab = GameManager.Instance?.GetEntity("恶灵");
+                if (prefab != null)
+                {
+                    int count = pr.ghostSpawnCount;
+                    for (int i = 0; i < count; i++)
+                    {
+                        var obj = Instantiate(prefab, transform.position, Quaternion.identity);
+                        var ent = obj.GetComponent<Entity>();
+                        var root = GameObject.FindGameObjectWithTag("EnemyAttackEntityRoot");
+                        if (root == null) root = other.gameObject;
+                        if (ent != null) ent.EntityBorn(root.transform.InverseTransformPoint(transform.position), Random.insideUnitCircle.normalized, root, ownerObj: gameObject);
+                    }
+                }
+            }
+        }
+
+        var persist = pr?.HasBoolBuff(PlayerResource.BoolBuffType.GhostPersistOnHit) ?? false;
+        Debug.Log($"[WraithEntity] persist={persist}");
+        if (!persist)
+            EntityDestroy();
     }
 }

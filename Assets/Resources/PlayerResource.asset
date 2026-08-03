@@ -12,9 +12,39 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 35068a9be51241f4dae59e5859a47256, type: 3}
   m_Name: PlayerResource
   m_EditorClassIdentifier: 
-  maxHealth: 100
-  currentHealth: 100
+  maxHealth: 120
+  currentHealth: 120
   maxEnergy: 100
   dashCost: 20
+  WeaponResources:
+  - {fileID: 11400000, guid: eac47bb5b5da171419166e05a608efbd, type: 2}
+  - {fileID: 11400000, guid: 3bd86dd4f0a93414a947bfd676464621, type: 2}
+  - {fileID: 11400000, guid: d5c680ed501a5d74c932f453cd0c9af5, type: 2}
+  - {fileID: 11400000, guid: 8a1204fdcf1ab4a4d8212c19d0e7c645, type: 2}
+  wraithPersistOnHit: 0
+  modifiers: []
+  bleedDamage: 1
+  bleedDuration: 0.5
+  bleedMaxStacks: 10
+  wraithMaxStacks: 10
+  ghostSpawnCount: 1
+  comboThreshold: 10
+  healOnKill: 0
+  comboEntities: []
+  damageBonuses:
+    physics: 1
+    ghost: 1
+    bleed: 1
+  attackRoundInterval: 1.5
+  minAttackInterval: 0.3
+  weaponScale: 1
+  runSpawnInterval: 1.5
+  runSpawnItems:
+  - {fileID: 11400000, guid: 62299394aa4c69243a54f69e8ed1199b, type: 2}
+  - {fileID: 11400000, guid: 62299394aa4c69243a54f69e8ed1199b, type: 2}
+  - {fileID: 11400000, guid: 62299394aa4c69243a54f69e8ed1199b, type: 2}
+  - {fileID: 11400000, guid: 62299394aa4c69243a54f69e8ed1199b, type: 2}
+  - {fileID: 11400000, guid: 62299394aa4c69243a54f69e8ed1199b, type: 2}
+  minRunSpawnInterval: 0.15
   recoveryInterval: 0.5
-  recoverySpeed: 60
+  recoverySpeed: 0.5

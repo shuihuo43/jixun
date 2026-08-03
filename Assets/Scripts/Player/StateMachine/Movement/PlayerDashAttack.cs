@@ -4,6 +4,8 @@ public class PlayerDashAttack : PlayerState
 {
     private Vector2 dashDir;
     private float timer;
+    private bool hasLocked;
+    private bool hitConfirmed;
 
     public PlayerDashAttack(string name, Player player, PlayerStateMachine stateMachine, bool isInit = false)
         : base(name, player, stateMachine, isInit) { }
@@ -19,31 +21,35 @@ public class PlayerDashAttack : PlayerState
         Vector3 mouse = Camera.main.ScreenToWorldPoint(Input.mousePosition);
         Vector2 mouseDir = ((Vector2)mouse - (Vector2)player.transform.position).normalized;
 
-        var gm = GameManager.Instance;
-        if (gm != null && gm.panelData != null && gm.panelData.isDashAttackHelp)
-        {
-            var locked = gm.GetLockedEnemy(player.transform.position, mouseDir, 10f, 120f);
-            dashDir = locked != null ? ((Vector2)locked.position - (Vector2)player.transform.position).normalized : mouseDir;
-        }
-        else
-        {
-            dashDir = mouseDir;
-        }
+        var locked = UnityEngine.Object.FindObjectOfType<MouseCursor>()?.lockedEnemy;
+        hasLocked = locked != null;
+        hitConfirmed = false;
+        dashDir = locked != null ? ((Vector2)locked.position - (Vector2)player.transform.position).normalized : mouseDir;
         timer = player.dashAttackDuration;
+
+        if (player.recallBladesOnDash)
+            foreach (var blade in UnityEngine.Object.FindObjectsOfType<LeafBladeEntity>())
+                blade.Recall(player.transform, player.recallBladeSpeed);
 
         if (player.dashAttackEntityPrefab != null)
         {
             var obj = Object.Instantiate(player.dashAttackEntityPrefab, player.transform.position, Quaternion.identity);
             var atk = obj.GetComponent<AttackEntity>();
             if (atk != null)
+            {
+                atk.damageResource = player.dashAttackDamageResource;
                 atk.AttackBorn(player.CurWeapon, Vector2.zero, dashDir, player.gameObject, isDash: true);
+                atk.EntityBorn(Vector2.zero, dashDir, player.gameObject, onDestroy: () => hitConfirmed = true);
+            }
         }
     }
 
     public override void StateUpdate()
     {
         timer -= Time.deltaTime;
-        if (timer <= 0f)
+        if (hitConfirmed)
+            EndDashAttack();
+        else if (timer <= 0f)
             EndDashAttack();
     }
 
@@ -78,9 +84,11 @@ public class PlayerDashAttack : PlayerState
 
     void EndDashAttack()
     {
-        if (Input.GetKey(KeyCode.Space))
-            stateMachine.ChangeToState("Run");
-        else
-            stateMachine.ChangeToState("Move");
+        player.dashAttackCooldownTimer = player.dashAttackCooldown;
+        stateMachine.ChangeToState("Run");
+
+        // 长按攻击 → 立即进入普通攻击
+        if (Input.GetMouseButton(0))
+            player.ExecuteAttack();
     }
 }

@@ -52,7 +52,7 @@ MonoBehaviour:
   entityPrefab: {fileID: 7411130837232170586, guid: 6c00b37034e9ec94bb85819ac18c2435, type: 3}
   isDebug: 0
   directionOffset: -90
-  windupDuration: 0.6
+  windupDuration: 0.8
   shapeArea: {fileID: 5435425622158245688}
   outerMaterial: {fileID: 2100000, guid: 11fb69f974205f2439dc9f2ebb045c4d, type: 2}
   outerColor: {r: 1, g: 1, b: 1, a: 1}

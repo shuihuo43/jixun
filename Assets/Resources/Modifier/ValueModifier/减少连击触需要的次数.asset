@@ -1,0 +1,19 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 71f6719f419ca2246bd2a2f901c62aa7, type: 3}
+  m_Name: "\u51CF\u5C11\u8FDE\u51FB\u89E6\u9700\u8981\u7684\u6B21\u6570"
+  m_EditorClassIdentifier: 
+  sprite: {fileID: 21300000, guid: 760ee4b686be40e4aad7cfa789a2d754, type: 3}
+  description: "\u51CF\u5C11\u8FDE\u51FB\u89E6\u53D1\u9700\u8981\u7684\u6B21\u6570-[value]"
+  buffType: 11
+  opType: 1
+  value: 1

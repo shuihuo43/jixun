@@ -10,6 +10,7 @@ public class E_02_Attack : E_Attack
 
     public override void StateEnter()
     {
+        windup = 0.5f; // 调试用，看前摇是否生效
         base.StateEnter();
         enemy.moveDir = enemy.faceDir;
     }

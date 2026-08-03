@@ -48,10 +48,11 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   damageResource: {fileID: 11400000, guid: 2ad450ab532716643b1fefa41c97cf2a, type: 2}
+  animator: {fileID: 0}
   bornClip: {fileID: 0}
   bornVolume: 0.8
-  speed: 15
-  lifeTime: 2
+  speed: 8
+  lifeTime: 12
   bulletCollider: {fileID: 3375914862410781394}
 --- !u!58 &3375914862410781394
 CircleCollider2D:
@@ -65,10 +66,10 @@ CircleCollider2D:
   m_Material: {fileID: 6200000, guid: 6123798e5780c664bb94e68b26e8da41, type: 2}
   m_IncludeLayers:
     serializedVersion: 2
-    m_Bits: 0
+    m_Bits: 1024
   m_ExcludeLayers:
     serializedVersion: 2
-    m_Bits: 5056
+    m_Bits: 13248
   m_LayerOverridePriority: 0
   m_ForceSendLayers:
     serializedVersion: 2

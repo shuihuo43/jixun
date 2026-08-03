@@ -14,11 +14,17 @@ public class DebuffList : MonoBehaviour
         if (count == lastCount) return;
         lastCount = count;
 
-        // 清旧
         foreach (var i in icons) Destroy(i);
         icons.Clear();
 
-        // 按层数生成
+        if (count <= 0)
+        {
+            gameObject.SetActive(false);
+            return;
+        }
+
+        gameObject.SetActive(true);
+
         for (int i = 0; i < count; i++)
         {
             var obj = Instantiate(iconPrefab, transform);

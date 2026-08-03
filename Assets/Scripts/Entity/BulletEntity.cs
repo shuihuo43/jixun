@@ -32,11 +32,17 @@ public class BulletEntity : Entity
 
     void OnTriggerEnter2D(Collider2D other)
     {
-        // 忽略生成者和同类子弹
-        if (owner != null && other.gameObject == owner) return;
         if (other.GetComponent<BulletEntity>() != null) return;
 
-        EntityDestroy();
+        bool isEnemyBullet = owner != null && owner.CompareTag("Enemy");
+        bool hitEnemy = other.CompareTag("Enemy");
+        bool hitPlayer = other.CompareTag("Player");
+        bool hitWall = other.gameObject.layer == LayerMask.NameToLayer("Wall");
+
+        // 对立目标 或 墙壁 → 销毁
+        if (hitWall) { EntityDestroy(); return; }
+        if (isEnemyBullet && hitPlayer) { EntityDestroy(); return; }
+        if (!isEnemyBullet && hitEnemy) { EntityDestroy(); return; }
     }
 
     public override void EntityDestroy()

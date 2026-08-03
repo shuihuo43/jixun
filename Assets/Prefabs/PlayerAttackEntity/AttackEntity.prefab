@@ -69,9 +69,10 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   damageResource: {fileID: 0}
+  animator: {fileID: 3901081991777750259}
   bornClip: {fileID: 8300000, guid: ba72b57b47fb3e3478a6eb58a499b9dc, type: 3}
   bornVolume: 1
-  animator: {fileID: 3901081991777750259}
+  weaponSprite: {fileID: 6133700573168620692}
 --- !u!58 &270506489732023661
 CircleCollider2D:
   m_ObjectHideFlags: 0
@@ -133,8 +134,8 @@ Transform:
   m_GameObject: {fileID: 6462348498820440554}
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 2, y: -0.67, z: 0}
-  m_LocalScale: {x: 10, y: 10, z: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
   m_Father: {fileID: 203069934187717792}
@@ -185,7 +186,7 @@ SpriteRenderer:
   m_FlipX: 0
   m_FlipY: 0
   m_DrawMode: 0
-  m_Size: {x: 0.64, y: 0.64}
+  m_Size: {x: 12.8, y: 12.8}
   m_AdaptiveModeThreshold: 0.5
   m_SpriteTileMode: 0
   m_WasSpriteAssigned: 0

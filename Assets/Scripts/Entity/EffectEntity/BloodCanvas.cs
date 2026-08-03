@@ -33,6 +33,19 @@ public class BloodCanvas : MonoBehaviour
 
     public static BloodCanvas Instance { get; private set; }
 
+    public void ClearStamps()
+    {
+        foreach (var b in batches.Values)
+        {
+            b.verts.Clear();
+            b.tris.Clear();
+            b.uvs.Clear();
+            b.dirty = true;
+            if (b.mesh != null) b.mesh.Clear();
+        }
+        stampCount = 0;
+    }
+
     private void Awake()
     {
         Instance = this;
@@ -74,11 +87,11 @@ public class BloodCanvas : MonoBehaviour
         Vector2 uv1 = new Vector2((r.x + r.width) / tw, (r.y + r.height) / th);
 
         int vi = b.verts.Count;
-        Vector3 localPos = transform.InverseTransformPoint(worldPos);
-        b.verts.Add(localPos + corners[0]);
-        b.verts.Add(localPos + corners[1]);
-        b.verts.Add(localPos + corners[2]);
-        b.verts.Add(localPos + corners[3]);
+        Vector3 wPos = new Vector3(worldPos.x, worldPos.y, 0f);
+        b.verts.Add(wPos + corners[0]);
+        b.verts.Add(wPos + corners[1]);
+        b.verts.Add(wPos + corners[2]);
+        b.verts.Add(wPos + corners[3]);
 
         b.uvs.Add(new Vector2(uv0.x, uv0.y));
         b.uvs.Add(new Vector2(uv1.x, uv0.y));
@@ -95,8 +108,7 @@ public class BloodCanvas : MonoBehaviour
     private Batch CreateBatch(Texture2D tex)
     {
         var go = new GameObject("Blood_" + tex.name);
-        go.transform.SetParent(transform);
-        go.transform.localPosition = Vector3.zero;
+        go.transform.position = Vector3.zero;
 
         var b = new Batch
         {

@@ -12,4 +12,4 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: abf3180da86ca554db3e72df4bb868b6, type: 3}
   m_Name: PanelData
   m_EditorClassIdentifier: 
-  isDashAttackHelp: 0
+  isDashAttackHelp: 1

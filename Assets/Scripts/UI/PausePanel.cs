@@ -4,7 +4,8 @@ using UnityEngine.UI;
 public class PausePanel : MonoBehaviour
 {
     [SerializeField] private GameObject panelRoot;
-    [SerializeField] private Toggle isDashAttackHelpToggle;
+    [SerializeField] private Toggle lockNearestToggle;
+    [SerializeField] private Toggle lockDirectionalToggle;
     [SerializeField] private PanelData panelData;
 
     void Start()
@@ -12,10 +13,26 @@ public class PausePanel : MonoBehaviour
         if (GameManager.Instance != null)
             GameManager.Instance.OnStateChanged += OnStateChanged;
 
-        if (isDashAttackHelpToggle != null && panelData != null)
+        if (panelData != null)
         {
-            isDashAttackHelpToggle.isOn = panelData.isDashAttackHelp;
-            isDashAttackHelpToggle.onValueChanged.AddListener(v => panelData.isDashAttackHelp = v);
+            if (lockNearestToggle != null)
+            {
+                lockNearestToggle.isOn = panelData.lockNearestEnemy;
+                lockNearestToggle.onValueChanged.AddListener(v =>
+                {
+                    panelData.lockNearestEnemy = v;
+                    if (v && lockDirectionalToggle != null) lockDirectionalToggle.isOn = false;
+                });
+            }
+            if (lockDirectionalToggle != null)
+            {
+                lockDirectionalToggle.isOn = panelData.lockDirectional;
+                lockDirectionalToggle.onValueChanged.AddListener(v =>
+                {
+                    panelData.lockDirectional = v;
+                    if (v && lockNearestToggle != null) lockNearestToggle.isOn = false;
+                });
+            }
         }
 
         panelRoot.SetActive(false);

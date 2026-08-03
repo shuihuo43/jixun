@@ -26,6 +26,12 @@ public class PlayerDash : PlayerState
 
         dashTimer = player.DashDuration;
         player.IsDashing = true;
+
+        if (player.recallBladesOnDash)
+        {
+            foreach (var blade in UnityEngine.Object.FindObjectsOfType<LeafBladeEntity>())
+                blade.Recall(player.transform, player.recallBladeSpeed);
+        }
     }
 
     public override void StateUpdate()
@@ -42,7 +48,9 @@ public class PlayerDash : PlayerState
     public override void StateFixedUpdate()
     {
         base.StateFixedUpdate();
-        Vector2 delta = dashDirection * player.DashSpeed * Time.fixedDeltaTime;
+        float t = 1f - dashTimer / player.DashDuration; // 0→1
+        float speed = player.DashSpeed * player.dashSpeedCurve.Evaluate(t);
+        Vector2 delta = dashDirection * speed * Time.fixedDeltaTime;
 
         if (player.Rigidbody2D != null)
         {
@@ -72,7 +80,6 @@ public class PlayerDash : PlayerState
     public override void StateExit()
     {
         base.StateExit();
-        player.dashAttackBuffer = 0.05f;
         player.IsDashing = false;
         dashTimer = -1f;
     }

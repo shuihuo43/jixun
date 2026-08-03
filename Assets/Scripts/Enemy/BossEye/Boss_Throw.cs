@@ -32,13 +32,31 @@ public class Boss_Throw : EnemyState
     }
 
     private List<FlyingObj> flying = new();
+    private List<GameObject> spawnedEntities = new();
     private float throwTimer;
+    private Boss_Eye boss;
 
     public override void StateEnter()
     {
         throwTimer = 0f;
         thrown = 0;
         enemy.moveDir = Vector2.zero;
+        boss = enemy as Boss_Eye;
+        if (boss != null)
+            boss.resource.OnDeath += CleanupSpawned;
+    }
+
+    public override void StateExit()
+    {
+        if (boss != null)
+            boss.resource.OnDeath -= CleanupSpawned;
+    }
+
+    void CleanupSpawned()
+    {
+        foreach (var e in spawnedEntities)
+            if (e != null) Destroy(e);
+        spawnedEntities.Clear();
     }
 
     public override void StateUpdate()
@@ -93,6 +111,7 @@ public class Boss_Throw : EnemyState
                         var lp = root.transform.InverseTransformPoint(target);
                         e.EntityBorn(lp, Vector2.up, root);
                     }
+                    spawnedEntities.Add(ent);
                 }
 
                 // 飞行精灵

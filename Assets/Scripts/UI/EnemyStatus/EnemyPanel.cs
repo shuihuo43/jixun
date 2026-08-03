@@ -28,13 +28,22 @@ public class EnemyPanel : MonoBehaviour
             foreach (var e in debuffLists)
                 listDict[e.type] = e.list;
 
-        if (enemy != null && enemy.resource != null)
+        if (enemy == null)
         {
-            resource = enemy.resource;
-            resource.OnHealthChanged += OnHealthChanged;
-            resource.OnDeath += () => gameObject.SetActive(false);
-            OnHealthChanged();
+            Debug.LogWarning($"[EnemyPanel] enemy 未赋值，挂载在 {transform.root.name} 上");
+            return;
         }
+        if (enemy.resource == null)
+        {
+            Debug.LogWarning($"[EnemyPanel] enemy.resource 为 null，enemy={enemy.name}");
+            return;
+        }
+
+        resource = enemy.resource;
+        resource.OnHealthChanged += OnHealthChanged;
+        resource.OnDeath += () => gameObject.SetActive(false);
+        OnHealthChanged();
+        Debug.Log($"[EnemyPanel] 初始化完成，enemy={enemy.name}, debuffLists={listDict.Count}");
     }
 
     void OnDestroy()
